@@ -7,19 +7,23 @@
 #include <stdlib.h>
 #include <cstring>
 
+#include "LoadCreationAlgorithm.h"
+
 using namespace std;
 
 int main() {
 
-	int fd, sw; // file directory and size written
+	int fd; // file directory
+	long unsigned int sw;  // size written
+	LoadCreationAlgorithm algo;
 
 	// open file with read, write, execute permissions and replace if existing
 	fd = creat( "/data/home/qnxuser/loadInput.txt", S_IRUSR | S_IWUSR | S_IXUSR );
 
-	string buffer = "This is a test";
-	buffer += "\nThis is supposed to be added in another line";
+	algo.createLoad();
 
 	// write buffer to file
+	string buffer = algo.getBuffer();
 	char char_buffer[buffer.length()+1];
 	strcpy(char_buffer, buffer.c_str());
 	sw = write( fd, char_buffer, sizeof( char_buffer ) );
