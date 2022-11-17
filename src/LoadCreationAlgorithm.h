@@ -18,5 +18,5 @@ class LoadCreationAlgorithm {
 	public:
 		LoadCreationAlgorithm();
 		string getBuffer();
-		void createLoad();
+		void createLoad(Load load);
 };

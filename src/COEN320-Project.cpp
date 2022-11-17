@@ -20,7 +20,25 @@ int main() {
 	// open file with read, write, execute permissions and replace if existing
 	fd = creat( "/data/home/qnxuser/loadInput.txt", S_IRUSR | S_IWUSR | S_IXUSR );
 
-	algo.createLoad();
+	// prompt user for load
+	string input;
+	bool stop = false;
+
+	while(!stop) {
+		cout << "Enter desired load (low, medium, high): ";
+		cin >> input;
+		if(input.compare("low") == 0) {
+			algo.createLoad(low);
+		} else if (input.compare("medium") == 0) {
+			algo.createLoad(medium);
+		} else if (input.compare("high") == 0) {
+			algo.createLoad(high);
+		} else {
+			cout << "Invalid input, try again." << endl;
+			continue;
+		}
+		stop = true;
+	}
 
 	// write buffer to file
 	string buffer = algo.getBuffer();
