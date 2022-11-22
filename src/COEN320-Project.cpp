@@ -6,13 +6,17 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <cstring>
+#include <cstdlib>
+#include <ctime>
 
+#include "Constants.h"
 #include "LoadCreationAlgorithm.h"
 
 using namespace std;
 
 int main() {
 
+	srand((int) time(0));
 	int fd; // file directory
 	long unsigned int sw;  // size written
 	LoadCreationAlgorithm algo;
