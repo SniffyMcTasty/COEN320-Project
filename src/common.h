@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-// #include <vector>
+#include <vector>
 #include <pthread.h>
 #include <signal.h>
 #include <sys/dispatch.h>
@@ -11,20 +11,23 @@ struct PlaneInfo_t
 {
     int id, x, y, z, dx, dy, dz, fl;
     friend ostream &operator<<(ostream &out, const PlaneInfo_t &info);
+    string toString() const {
+    	string s = "{";
+        s += "  ID=" + to_string(id);
+        s += "  X=" + to_string(x);
+        s += "  Y=" + to_string(y);
+        s += "  Z=" + to_string(z);
+        s += "  dX=" + to_string(dx);
+        s += "  dY=" + to_string(dy);
+        s += "  dZ=" + to_string(dz);
+        s += "  FL=" + to_string(fl);
+        s += "  }";
+        return s;
+    }
 };
 
-inline ostream &operator<<(ostream &out, const PlaneInfo_t &info)
-{
-    out << "{";
-    out << "  ID=" << info.id;
-    out << "  X=" << info.x;
-    out << "  Y=" << info.y;
-    out << "  Z=" << info.z;
-    out << "  dX=" << info.dx;
-    out << "  dY=" << info.dy;
-    out << "  dZ=" << info.dz;
-    out << "  FL=" << info.fl;
-    out << "  }";
+inline ostream &operator<<(ostream &out, const PlaneInfo_t &info) {
+    out << info.toString();
     return out;
 }
 
@@ -32,23 +35,13 @@ inline ostream &operator<<(ostream &out, const PlaneInfo_t &info)
 
 typedef struct _pulse msg_header_t;
 
-struct Msg
-{
+struct Msg {
     msg_header_t hdr;
     PlaneInfo_t info;
 };
 
-enum MsgType : _Uint16t
-{
-    TIMEOUT,
-    REQ,
-    REPLY
-};
-enum MsgSubType : _Uint16t
-{
-    RADAR
-
-};
+enum MsgType : _Uint16t { TIMEOUT, RADAR, EXIT };
+enum MsgSubType : _Uint16t { REQ, REPLY };
 
 ////////////////////////////////////////////////// MACROS
 
@@ -66,7 +59,6 @@ enum MsgSubType : _Uint16t
 
 ////////////////////////////////////////////////// UTILITY
 
-inline int randRange(int lo, int hi)
-{
+inline int randRange(int lo, int hi) {
     return rand() % (hi - lo) + lo;
 }

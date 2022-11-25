@@ -1,13 +1,7 @@
-/*
- * Plane.h
- *
-
- */
-
-#ifndef PLANE_H_
-#define PLANE_H_
+#pragma once
 
 #include "common.h"
+
 class Plane
 {
     friend ostream &operator<<(ostream &out, const Plane &plane);
@@ -17,9 +11,9 @@ private:
     PlaneInfo_t info;
     pthread_t thread;
     string channel;
-    name_attach_t *attach;
-    int coid;
-    timer_t timerId;
+    name_attach_t *attach = NULL;
+    int coid = 0;
+    timer_t timerId = 0;
 
     void setup();
     void setupChannel();
@@ -33,14 +27,8 @@ public:
     Plane(PlaneInfo_t info);
     int join();
     bool inZone();
-    int ping();
-    int radarReply(_Int32t scoid);
+    string toString() const;
+    PlaneInfo ping();
 
     static PlaneInfo_t randomInfo();
 };
-
-
-
-
-
-#endif /* PLANE_H_ */
