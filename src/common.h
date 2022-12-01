@@ -7,13 +7,13 @@
 #include <sys/dispatch.h>
 using namespace std;
 
-struct PlaneInfo
+struct PlaneInfo_t
 {
     int id, x, y, z, dx, dy, dz, fl;
-    friend ostream &operator<<(ostream &out, const PlaneInfo &info);
+    friend ostream &operator<<(ostream &out, const PlaneInfo_t &info);
 };
 
-inline ostream &operator<<(ostream &out, const PlaneInfo &info)
+inline ostream &operator<<(ostream &out, const PlaneInfo_t &info)
 {
     out << "{";
     out << "  ID=" << info.id;
@@ -35,7 +35,7 @@ typedef struct _pulse msg_header_t;
 struct Msg
 {
     msg_header_t hdr;
-    PlaneInfo info;
+    PlaneInfo_t info;
 };
 
 enum MsgType : _Uint16t

@@ -34,3 +34,5 @@
 # Others
 *.cproject
 .vscode/settings.json
+build/x86_64-debug/COEN320-Project
+*.core

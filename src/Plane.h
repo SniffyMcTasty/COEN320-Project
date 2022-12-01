@@ -14,7 +14,7 @@ class Plane
     friend void *planeThread(void *arg);
 
 private:
-    PlaneInfo info;
+    PlaneInfo_t info;
     pthread_t thread;
     string channel;
     name_attach_t *attach;
@@ -30,13 +30,13 @@ private:
     void updatePosition();
 
 public:
-    Plane(PlaneInfo info);
+    Plane(PlaneInfo_t info);
     int join();
     bool inZone();
     int ping();
     int radarReply(_Int32t scoid);
 
-    static PlaneInfo randomInfo();
+    static PlaneInfo_t randomInfo();
 };
 
 

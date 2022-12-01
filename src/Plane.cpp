@@ -73,7 +73,7 @@ ostream &operator<<(ostream &out, const Plane &plane)
     return out;
 }
 
-Plane::Plane(PlaneInfo info) : info{info}
+Plane::Plane(PlaneInfo_t info) : info{info}
 {
     channel = to_string(info.x + info.y + info.z);
     pthread_create(&thread, NULL, planeThread, (void *)this);
@@ -149,7 +149,7 @@ int Plane::ping()
     msg.hdr.type = MsgType::REQ;
     msg.hdr.subtype = MsgSubType::RADAR;
 
-    memset(&msg.info, 0, sizeof(PlaneInfo));
+    memset(&msg.info, 0, sizeof(PlaneInfo_t));
     return MsgSend(coid, &msg, sizeof(msg), NULL, 0);
 }
 int Plane:: radarReply(_Int32t scoid){
@@ -160,7 +160,7 @@ int Plane:: radarReply(_Int32t scoid){
 	 return MsgSend(scoid, &msg, sizeof(msg), NULL, 0);
 }
 
-PlaneInfo Plane::randomInfo()
+PlaneInfo_t Plane::randomInfo()
 {
     //	- Aircraft enters airspace flying in horizontal plane (x or y plane) at
     //	constant velocity.
@@ -186,5 +186,5 @@ PlaneInfo Plane::randomInfo()
     z = LOWER_Z;
     dz = (AIRSPACE_Z / 10);
     fl = z / 100;
-    return PlaneInfo{id, x, y, z, dx, dy, dz, fl};
+    return PlaneInfo_t{id, x, y, z, dx, dy, dz, fl};
 }

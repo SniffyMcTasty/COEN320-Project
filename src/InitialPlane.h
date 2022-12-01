@@ -25,7 +25,7 @@ private:
 	void setParameters();
 
 public:
-	InitialPlane(int time);
+	InitialPlane(int time, int id);
 	string toString();
 };
 
