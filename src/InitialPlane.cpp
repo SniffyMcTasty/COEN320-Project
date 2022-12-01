@@ -1,8 +1,8 @@
 #include "InitialPlane.h"
 
-InitialPlane::InitialPlane(int time) {
+InitialPlane::InitialPlane(int time, int id) {
 	this->time = time;
-	this->id = rand() % 9000 + 1000; // ranges from 1000 to 9999
+	this->id = id;
 	this->setParameters();
 }
 

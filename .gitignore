@@ -33,3 +33,4 @@
 
 # Others
 *.cproject
+.vscode/settings.json

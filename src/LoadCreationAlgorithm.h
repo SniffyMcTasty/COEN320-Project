@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <cstring>
 #include <cstdlib>
+#include <set>
 
 #include "Constants.h"
 #include "InitialPlane.h"

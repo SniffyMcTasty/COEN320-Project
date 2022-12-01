@@ -25,10 +25,20 @@ void LoadCreationAlgorithm::createLoad(Load load) {
 
 	// creates a plane at t = 0 and has a 1/4 chance to do so afterward at every t
 	int t = 0;
+	set<int> ids;
+	std::pair<std::set<int>::iterator, bool> ret;
 	for(int i = 0; i < nbr_planes; t++) {
 		if(t == 0 || rand() % 4 == 0) {
 			i++;
-			InitialPlane plane(t);
+			// create id
+			id = rand() % ID_INTERVAL + ID_MIN; // ranges from 1000 to 9999
+			ret = ids.insert(id);
+			// check if id already exists
+			while(ret.second == false) {
+				id = rand() % ID_INTERVAL + ID_MIN; // ranges from 1000 to 9999
+				ret = ids.insert(id);
+			}
+			InitialPlane plane(t, id);
 			this->buffer += "\n" + plane.toString();
 		}
 	}
