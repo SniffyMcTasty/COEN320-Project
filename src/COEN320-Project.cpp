@@ -19,8 +19,6 @@
 
 using namespace std;
 
-#define FILENAME "/data/home/qnxuser/loadInput.txt"
-
 bool createInputFile();
 vector<pair<int, PlaneInfo_t>> readInputFile();
 
@@ -40,22 +38,29 @@ int main() {
 	int time = 0;
 
 	// create threads from while loop with 1s counter (initialized at 0)
-	while(true) {
+	while(!planes.empty()) {
 		// check if there is a plane coming at current time
 		// -> if so, create thread from plane, add it to airspace vector
 		//  and then do this: planes.erase(planes.begin());
 		//
 		// -> do nothing if it's not the case
 
-		if(planes.empty()) break;
+		if (time >= planes.front().first) {
+			airspace.push_back(new Plane(planes.front().second));
+			planes.erase(planes.begin());
+		}
 
 		// delay of 1s
 		delay(1000);
-
 		time++;
 	}
 
 	// join every thread
+
+	for (Plane* p : airspace) {
+		p->join();
+		delete p;
+	}
 
 	return EXIT_SUCCESS;
 }

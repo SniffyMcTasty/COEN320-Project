@@ -13,6 +13,8 @@
 #define ID_MIN 1000
 #define ID_INTERVAL 9000
 
+#define FILENAME "~/qnxuser/loadInput.txt"
+
 enum Load {low, medium, high};
 
 
