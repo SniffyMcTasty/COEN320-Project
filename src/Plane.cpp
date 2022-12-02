@@ -31,6 +31,15 @@ void *planeThread(void *arg) {
 
 			break;
 
+//		case MsgType::COMMAND:
+//			if (MsgSubtype::CHANGE_SPEED) {
+//
+//			}
+//			else if (MsgSubtype::CHANGE_ALTITUDE) {
+//
+//			}
+//			break;
+
 		case MsgType::TIMEOUT:
 			plane.updatePosition();
 

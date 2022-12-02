@@ -45,8 +45,8 @@ struct Msg {
     PlaneInfo_t info;
 };
 
-enum MsgType : _Uint16t { TIMEOUT, RADAR, EXIT };
-enum MsgSubtype : _Uint16t { REQ, REPLY };
+enum MsgType : _Uint16t { TIMEOUT, RADAR, COMMAND, EXIT }; // add msgs here
+enum MsgSubtype : _Uint16t { REQ, REPLY }; // add subtypes here
 
 ////////////////////////////////////////////////// MACROS
 
