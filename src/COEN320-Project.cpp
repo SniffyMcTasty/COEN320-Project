@@ -23,7 +23,6 @@ using namespace std;
 bool createInputFile();
 vector<pair<int, PlaneInfo_t>> readInputFile();
 
-
 vector<PlaneInfo_t> sendRadarCommand(name_attach_t* attach);
 void sendRadarExit();
 
