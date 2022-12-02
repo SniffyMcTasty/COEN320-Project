@@ -1,6 +1,8 @@
 #pragma once
 
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include <vector>
 #include <pthread.h>
 #include <signal.h>
@@ -12,19 +14,22 @@ struct PlaneInfo_t
     int id, x, y, z, dx, dy, dz, fl;
     friend ostream &operator<<(ostream &out, const PlaneInfo_t &info);
     string toString() const {
-    	string s = "{";
-        s += "  ID=" + to_string(id);
-        s += "  X=" + to_string(x);
-        s += "  Y=" + to_string(y);
-        s += "  Z=" + to_string(z);
-        s += "  dX=" + to_string(dx);
-        s += "  dY=" + to_string(dy);
-        s += "  dZ=" + to_string(dz);
-        s += "  FL=" + to_string(fl);
-        s += "  }";
-        return s;
+    	stringstream ss;
+    	ss << "{";
+        ss << "  ID=" << setw(4) << id;
+        ss << "  X=" << setw(6) << to_string(x);
+        ss << "  Y=" << setw(6) << to_string(y);
+        ss << "  Z=" << setw(5) << to_string(z);
+        ss << "  dX=" << setw(4) << to_string(dx);
+        ss << "  dY=" << setw(4) << to_string(dy);
+        ss << "  dZ=" << setw(4) << to_string(dz);
+        ss << "  FL=" << setw(3) << to_string(fl);
+        ss << "  }";
+        return ss.str();
     }
 };
+
+// 4 6 6 5 4 4 4 3
 
 inline ostream &operator<<(ostream &out, const PlaneInfo_t &info) {
     out << info.toString();
@@ -41,7 +46,7 @@ struct Msg {
 };
 
 enum MsgType : _Uint16t { TIMEOUT, RADAR, EXIT };
-enum MsgSubType : _Uint16t { REQ, REPLY };
+enum MsgSubtype : _Uint16t { REQ, REPLY };
 
 ////////////////////////////////////////////////// MACROS
 

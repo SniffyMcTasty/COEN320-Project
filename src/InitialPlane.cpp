@@ -56,4 +56,10 @@ void InitialPlane::setParameters() {
 	// set constant z
 	this->z = rand() % (HEIGHT + 1) + BOTTOM;
 	this->vz = 0;
+
+
+//	// TODO: remove when done testing
+//	this->vx *= 5;	// testing: GOGOGOGOG FAASSSSTTT
+//	this->vy *= 5;	//
+
 }

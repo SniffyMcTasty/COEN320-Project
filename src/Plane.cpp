@@ -21,9 +21,9 @@ void *planeThread(void *arg) {
 		switch (msg.hdr.type) {
 
 		case MsgType::RADAR:
-			if (msg.hdr.subtype == MsgSubType::REQ) {
+			if (msg.hdr.subtype == MsgSubtype::REQ) {
 				// turn request msg into response msg with plane info and reply
-				msg.hdr.subtype = MsgSubType::REPLY;
+				msg.hdr.subtype = MsgSubtype::REPLY;
 				msg.info = plane.info;
 				MsgReply(rcvid, EOK, &msg, sizeof(msg));
 				break;
@@ -126,17 +126,18 @@ string Plane::toString() const {
 	return info.toString();
 }
 
-PlaneInfo Plane::ping() {
+PlaneInfo_t Plane::ping() {
+	while (coid == 0);
 	Msg msg;
 	msg.hdr.type = MsgType::RADAR;
-	msg.hdr.subtype = MsgSubType::REQ;
+	msg.hdr.subtype = MsgSubtype::REQ;
 	memset(&msg.info, 0, sizeof(msg.info));
 	if (MsgSend(coid, &msg, sizeof(msg), &msg, sizeof(msg)) < 0)
 		cout << "ERROR: PLANE PING FAILED" << endl;
 	return msg.info;
 }
 
-PlaneInfo Plane::randomInfo() {
+PlaneInfo_t Plane::randomInfo() {
 	//	- Aircraft enters airspace flying in horizontal plane (x or y plane) at
 	//	constant velocity.
 	//	- Maintains speed and altitude unless commanded to change.
@@ -164,5 +165,5 @@ PlaneInfo Plane::randomInfo() {
 	z = LOWER_Z;
 	dz = (AIRSPACE_Z / 10);
 	fl = z / 100;
-	return PlaneInfo{id, x, y, z, dx, dy, dz, fl};
+	return PlaneInfo_t{id, x, y, z, dx, dy, dz, fl};
 }

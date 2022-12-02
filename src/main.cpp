@@ -4,7 +4,7 @@
 
 void testRadar();
 
-int main(int argc, char *argv[]) {
+int lolz(int argc, char *argv[]) {
 
     srand(time(NULL));
     cout << "***** APPLICATION START *****" << endl;
@@ -17,14 +17,14 @@ int main(int argc, char *argv[]) {
 
 void testRadar() {
 	const int N = 3;
-    vector<PlaneInfo> infos;
+    vector<PlaneInfo_t> infos;
     vector<Plane*> airspace;
     Radar radar(&airspace);
 
     for (int i = 0; i < N; i++)
     	infos.push_back(Plane::randomInfo());
 
-    while (!infos.empty() || !radar.noPlanes) {
+    while (!infos.empty() /*|| !radar.noPlanes*/) {
     	delay(1000);
 
     	cout << "Radar Ping:" << endl;
@@ -40,7 +40,7 @@ void testRadar() {
     	}
     }
 
-    radar.exit();
+//    radar.exit();
 
     for (Plane* plane : airspace) {
     	plane->join();

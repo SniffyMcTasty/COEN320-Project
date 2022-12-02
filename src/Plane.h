@@ -28,7 +28,7 @@ public:
     int join();
     bool inZone();
     string toString() const;
-    PlaneInfo ping();
+    PlaneInfo_t ping();
 
     static PlaneInfo_t randomInfo();
 };
