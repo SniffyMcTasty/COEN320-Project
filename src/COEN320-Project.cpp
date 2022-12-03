@@ -29,6 +29,40 @@ void sendExit(const char* channel);
 void parseAltCmd(string& input, int& id, int& alt);
 void changeAlt(int id, int z);
 
+int main0() {
+
+	//			id		x		y	z		dx	  dy	  dz	FL
+	Plane plane({111, 20000, 20000, 30000, -600, 800, 0, 300});
+
+	delay(2000);
+
+	int coid;
+	Msg msg;
+
+	cout << "Angle change" << endl;
+	coid = name_open(plane.channel.c_str(), 0);
+	msg.hdr.type = MsgType::COMMAND;
+	msg.hdr.subtype = MsgSubtype::CHANGE_POSITION;
+	msg.floatValue1 = -10;
+	MsgSend(coid, (void *)&msg, sizeof(msg), 0, 0);
+	name_close(coid);
+
+	delay(2000);
+
+	cout << "Angle change" << endl;
+	coid = name_open(plane.channel.c_str(), 0);
+	msg.hdr.type = MsgType::COMMAND;
+	msg.hdr.subtype = MsgSubtype::CHANGE_POSITION;
+	msg.floatValue1 = 10;
+	MsgSend(coid, (void *)&msg, sizeof(msg), 0, 0);
+	name_close(coid);
+
+	plane.join();
+
+	return 0;
+}
+
+
 int main()
 {
 	cout << "***** APPLICATION START *****" << endl;

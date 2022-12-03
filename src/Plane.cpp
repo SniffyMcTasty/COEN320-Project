@@ -1,6 +1,8 @@
 #include "Plane.h"
 #include <math.h>
 
+#define PI 3.14159265
+
 void *planeThread(void *arg)
 {
 
@@ -62,17 +64,17 @@ void *planeThread(void *arg)
 			{
 				plane.changeAltFlag = true;
 				plane.finalAlt = msg.info.z;
-				plane.info.dz = (msg.info.z - plane.info.z) / 10;
+				plane.info.dz = msg.info.z > plane.info.z ? +50 : -50;
 			}
-			// message type command send by the the radar to make the plane postion
+			// message type command send by the the radar to make the plane position
 			// alexe this part need to be change
-			else if (msg.hdr.subtype == MsgSubtype ::CHANGE_POSITION)
+			else if (msg.hdr.subtype == MsgSubtype::CHANGE_POSITION)
 			{
-				const int &dx = plane.info.dx, &dy = plane.info.dy;
-				float v = sqrt(dx * dx + dy * dy);
-				float angle = atan((float)dy / (float)dx) + msg.floatValue1;
-				if (dx < 0)
-					angle += 3.14159265;
+				const double &dx = plane.info.dx, &dy = plane.info.dy;
+				double v = sqrt(dx * dx + dy * dy);
+				double angle = atan(dy / dx);
+				if (dx < 0) angle += PI;
+				angle += msg.floatValue1 * PI / 180;
 				plane.info.dx = v * cos(angle);
 				plane.info.dy = v * sin(angle);
 			}
@@ -81,7 +83,7 @@ void *planeThread(void *arg)
 
 		case MsgType::TIMEOUT:
 			plane.updatePosition();
-//			std::cout << "plane is :" << plane << std::endl;
+			std::cout << "plane is :" << plane << std::endl;
 			MsgReply(rcvid, EOK, 0, 0);
 			break;
 
