@@ -37,6 +37,8 @@ void* computerThread(void* arg) {
 		pthread_exit(NULL);
 	}
 
+	cout << "CPU Thread Running. Checking for violations at interval n = " << cpu.n << "s" << endl;
+
 	Msg msg;
 	int saveCounter = 0;
 	bool exit = false;
@@ -53,19 +55,23 @@ void* computerThread(void* arg) {
 
 		case MsgType::TIMEOUT:
 			cpu.time += 5;
-			cout << "CPU: Send radar command" << endl;
+			cout << "[t=" << cpu.time << "] CPU: Send radar command" << endl;
 			MsgReply(rcvid, EOK, 0, 0);
 			{
 				vector<PlaneInfo_t> planes = cpu.sendRadarCommand();
-				for (PlaneInfo_t p : planes) {
+
+				if (planes.empty())
+					cout << "No Planes" << endl;
+
+				for (PlaneInfo_t p : planes)
 					cpu.sendToDisplay(p);
-				}
+
 				if (++saveCounter >= 6) {
 					saveCounter = 0;
 					cpu.storeAirspace(planes);
 				}
-				// CHECK FOR VIOLATIONS NEXT
 
+				cpu.checkViolations(planes);
 			}
 
 			break;
@@ -100,6 +106,55 @@ int CpuSystem::join() {
 	return pthread_join(thread, NULL);
 }
 
+void CpuSystem::storeAirspace(const vector<PlaneInfo_t>& planes) {
+	char buff[128];
+	memset(buff, 0, sizeof(buff));
+	sprintf(buff, "t=%d:\n", time);
+	write(fd, buff, sizeof(buff));
+
+	if (planes.empty()) {
+		sprintf(buff, "\tNo Planes");
+		write(fd, buff, sizeof(buff));
+	}
+
+	for (PlaneInfo_t p : planes) {
+		sprintf(buff, "\t%s\n", p.toString().c_str());
+		write(fd, buff, sizeof(buff));
+	}
+}
+
+void CpuSystem::checkViolations(const vector<PlaneInfo_t>& planes) {
+	for (size_t i = 0; i < planes.size(); i++) {
+		for (size_t j = i + 1; j < planes.size(); j++) {
+
+			for (int t = 0; t < n; t += 1) {
+				PlaneInfo_t thisPlane = calculatePosition(planes[i], t);
+				PlaneInfo_t nextPlane = calculatePosition(planes[j], t);
+
+				if (notSafe(thisPlane, nextPlane)) {
+					alertDisplay(thisPlane.id, nextPlane.id, t);
+					break;
+				}
+			}
+		}
+	}
+}
+
+PlaneInfo_t CpuSystem::calculatePosition(const PlaneInfo_t& plane, int t) {
+	PlaneInfo_t position = plane;
+	position.x += position.dx * t;
+	position.y += position.dy * t;
+	position.z += position.dz * t;
+	return position;
+}
+
+bool CpuSystem::notSafe(const PlaneInfo_t& thisPlane, const PlaneInfo_t& nextPlane) {
+	// safe zone is box around plane with l=w=3000 and h=1000
+	if (abs(thisPlane.x - nextPlane.x) > SAFEZONE_H) return false;
+	if (abs(thisPlane.y - nextPlane.y) > SAFEZONE_H) return false;
+	if (abs(thisPlane.z - nextPlane.z) > SAFEZONE_V) return false;
+	return true;
+}
 
 vector<PlaneInfo_t> CpuSystem::sendRadarCommand()
 {
@@ -168,14 +223,25 @@ void CpuSystem::sendToDisplay(PlaneInfo_t info){
 	name_close(coid);
 }
 
-void CpuSystem::storeAirspace(const vector<PlaneInfo_t>& planes) {
-	char buff[128];
-	memset(buff, 0, sizeof(buff));
-	sprintf(buff, "t=%d:\n", time);
-	write(fd, buff, sizeof(buff));
+void CpuSystem::alertDisplay(int id1, int id2, int t) {
+	int coid = 0;
 
-	for (PlaneInfo_t p : planes) {
-		sprintf(buff, "\t%s\n", p.toString().c_str());
-		write(fd, buff, sizeof(buff));
-	}
+	// open channel to display thread
+	if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1)
+		cout << "ERROR: CREATING CLIENT TO DISPLAY" << endl;
+
+	// create exit message
+	Msg msg;
+	msg.hdr.type = MsgType::ALERT;
+	msg.info.id = id1;	// store first plane id in info.id
+	msg.info.x = id2;	// store second in x (quick hack)
+	msg.info.y = t;		// store time in y (quick hack)
+
+	// send exit message
+	MsgSend(coid, &msg, sizeof(msg), 0, 0);
+
+	// close the channel
+	name_close(coid);
 }
+
+

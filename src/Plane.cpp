@@ -60,9 +60,9 @@ void *planeThread(void *arg)
 			// message type command send by the the radar to make the plane change altitude
 			else if (msg.hdr.subtype == MsgSubtype::CHANGE_ALTITUDE)
 			{
-				plane.info.dz = msg.info.dz;
 				plane.changeAltFlag = true;
 				plane.finalAlt = msg.info.z;
+				plane.info.dz = (msg.info.z - plane.info.z) / 10;
 			}
 			// message type command send by the the radar to make the plane postion
 			// alexe this part need to be change

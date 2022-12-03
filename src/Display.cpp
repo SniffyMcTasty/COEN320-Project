@@ -27,14 +27,14 @@ void* displayThread(void* arg){
                 break;
 
             case MsgType::ALERT:
-                cout << "MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!!" << endl;
+                cout << "\nMAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!!" << endl;
                 cout << "            ______" << endl;
-                cout << "            _\\ _~-\\___" << endl;
+                cout << "            _\\ _--\\___" << endl;
                 cout << "    =  = ==(____AA____D" << endl;
-                cout << "                \\_____\\___________________,-~~~~~~~`-.._" << endl;
-                cout << "                /     o O o o o o O O o o o o o o O o  |\\_" << endl;
-                cout << "                `~-.__        ___..----..                  )" << endl;
-                cout << "                      `---~~\\___________/------------`````" << endl;
+                cout << "                \\_____\\___________________,----------.._" << "\tSafety Violation:" << endl;
+                cout << "                /     o o o o o o o o o o o o o o o o  |\\_" << "\tPlane ID-" << msg.info.id << endl;
+                cout << "                `--.__        ___..----..                  )" << "\t& Plane ID-" << msg.info.x << endl;
+                cout << "                      `-----\\___________/------------`````" << "\tin t = " << msg.info.y << "s" << endl;
                 cout << "                      =  ===(_________D\n" << endl;
                 cout << "MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!!\n" << endl;
                 MsgReply(rcvid, EOK, 0, 0);
