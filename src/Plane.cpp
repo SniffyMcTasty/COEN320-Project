@@ -64,10 +64,10 @@ void *planeThread(void *arg)
 			}
 			else if (msg.hdr.subtype == MsgSubtype ::CHANGE_POSITION)
 			{
-				const int &a = plane.info.dx, &b = plane.info.dy;
-				float v = sqrt(a * a + b * b);
-				float angle = atan((float)b / (float)a) + msg.floatValue1;
-				if (a < 0)
+				const int &dx = plane.info.dx, &dy = plane.info.dy;
+				float v = sqrt(dx * dx + dy * dy);
+				float angle = atan((float)dy / (float)dx) + msg.floatValue1;
+				if (dx < 0)
 					angle += 3.14159265;
 				plane.info.dx = v * cos(angle);
 				plane.info.dy = v * sin(angle);
