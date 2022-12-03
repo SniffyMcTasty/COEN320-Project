@@ -16,8 +16,9 @@
 #define FILENAME "/data/home/qnxuser/loadInput.txt"
 
 //#define MAIN_CHANNEL "mainChannel"
-#define RADAR_CHANNEL "radarChannel"
-#define CPU_CHANNEL "cpuChannel"
+#define RADAR_CHANNEL	"radarChannel"
+#define CPU_CHANNEL		"cpuChannel"
+#define DISPLAY_CHANNEL	"displayChannel"
 
 enum Load {low, medium, high};
 

@@ -4,8 +4,6 @@
 #include "Constants.h"
 
 
-#define DISPLAY_CHANNEL "displayChannel"
-
 class Display {
 
     friend void* displayThread(void* arg);
