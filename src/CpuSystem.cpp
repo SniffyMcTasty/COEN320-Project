@@ -30,9 +30,38 @@ void* computerThread(void* arg) {
 	}
 
 	itimerspec timerSpec{ 5, 0, 5, 0 };
+	if (timer_settime(cpu.timerId, 0, &timerSpec, NULL) < 0) {
+		cout << "ERROR: STARTING CPU TIMER" << endl;
+		pthread_exit(NULL);
+	}
 
+	Msg msg;
+	bool exit = false;
+	while (!exit) {
+		memset(&msg, 0, sizeof(msg));
+		int rcvid = MsgReceive(cpu.attach->chid, &msg, sizeof(msg), NULL);
 
+		if (rcvid == -1) break;
+		if (!rcvid && (msg.hdr.code == _PULSE_CODE_DISCONNECT))	{ ConnectDetach(msg.hdr.scoid);		continue; }
+		if (msg.hdr.type == _IO_CONNECT) 						{ MsgReply(rcvid, EOK, NULL, 0);	continue; }
+		if (msg.hdr.type > _IO_BASE && msg.hdr.type <= _IO_MAX)	{ MsgError(rcvid, ENOSYS);			continue; }
 
+		switch (msg.hdr.type) {
+
+		case MsgType::TIMEOUT:
+
+			MsgReply(rcvid, EOK, 0, 0);
+			break;
+
+		default:
+			MsgReply(rcvid, EOK, 0, 0);
+			break;
+		}
+	}
+
+	itimerspec off{ 0, 0, 0, 0 };
+	timer_settime(cpu.timerId, 0, &off, NULL);
+	timer_delete(cpu.timerId);
 	name_detach(cpu.attach, 0);
 	name_close(cpu.coid);
 	pthread_exit(NULL);

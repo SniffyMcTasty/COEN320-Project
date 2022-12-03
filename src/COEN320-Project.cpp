@@ -24,7 +24,7 @@ bool createInputFile();
 vector<pair<int, PlaneInfo_t>> readInputFile();
 
 vector<PlaneInfo_t> sendRadarCommand(name_attach_t* attach);
-void sendRadarExit();
+void sendExit(const char* channel);
 
 int main() {
     cout << "***** APPLICATION START *****" << endl;
@@ -90,8 +90,7 @@ int main() {
 		delete p;
 	}
 
-
-	sendRadarExit();
+	sendExit(RADAR_CHANNEL);
 	radar.join();
 
     cout << "***** APPLICATION END *****" << endl;
@@ -143,11 +142,11 @@ vector<PlaneInfo_t> sendRadarCommand(name_attach_t* attach) {
 	return planes;		// return the planes info
 }
 
-void sendRadarExit() {
+void sendExit(const char* channel) {
 	int coid = 0;
 
 	// open channel to radar thread
-    if ((coid = name_open(RADAR_CHANNEL, 0)) == -1)
+    if ((coid = name_open(channel, 0)) == -1)
     	cout << "ERROR: CREATING CLIENT TO RADAR" << endl;
 
     // create exit message
