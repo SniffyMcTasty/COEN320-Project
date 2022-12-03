@@ -4,6 +4,8 @@ void* computerThread(void* arg) {
 
 	CpuSystem& cpu = *((CpuSystem*)arg);
 
+	cpu.fd = creat(OUTPUT_FILENAME, S_IRUSR | S_IWUSR | S_IXUSR);
+
 	// create channel to listen on for this thread
 	cpu.attach = name_attach(NULL, CPU_CHANNEL, 0);
 	if (cpu.attach == NULL) {
@@ -36,6 +38,7 @@ void* computerThread(void* arg) {
 	}
 
 	Msg msg;
+	int saveCounter = 0;
 	bool exit = false;
 	while (!exit) {
 		memset(&msg, 0, sizeof(msg));
@@ -49,13 +52,20 @@ void* computerThread(void* arg) {
 		switch (msg.hdr.type) {
 
 		case MsgType::TIMEOUT:
-
+			cpu.time += 5;
 			cout << "CPU: Send radar command" << endl;
 			MsgReply(rcvid, EOK, 0, 0);
 			{
-				for (PlaneInfo_t plane : cpu.sendRadarCommand()) {
-
+				vector<PlaneInfo_t> planes = cpu.sendRadarCommand();
+				for (PlaneInfo_t p : planes) {
+					cpu.sendToDisplay(p);
 				}
+				if (++saveCounter >= 6) {
+					saveCounter = 0;
+					cpu.storeAirspace(planes);
+				}
+				// CHECK FOR VIOLATIONS NEXT
+
 			}
 
 			break;
@@ -77,6 +87,7 @@ void* computerThread(void* arg) {
 	timer_delete(cpu.timerId);
 	name_detach(cpu.attach, 0);
 	name_close(cpu.coid);
+	close(cpu.fd);
 	pthread_exit(NULL);
 }
 
@@ -136,4 +147,35 @@ vector<PlaneInfo_t> CpuSystem::sendRadarCommand()
 
 	name_close(coid); // close the channel
 	return planes;	  // return the planes info
+}
+
+void CpuSystem::sendToDisplay(PlaneInfo_t info){
+	int coid = 0;
+
+	// open channel to display thread
+	if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1)
+		cout << "ERROR: CREATING CLIENT TO DISPLAY" << endl;
+
+	// create exit message
+	Msg msg;
+	msg.hdr.type = MsgType::PRINT;
+	msg.info = info;
+
+	// send exit message
+	MsgSend(coid, &msg, sizeof(msg), 0, 0);
+
+	// close the channel
+	name_close(coid);
+}
+
+void CpuSystem::storeAirspace(const vector<PlaneInfo_t>& planes) {
+	char buff[128];
+	memset(buff, 0, sizeof(buff));
+	sprintf(buff, "t=%d:\n", time);
+	write(fd, buff, sizeof(buff));
+
+	for (PlaneInfo_t p : planes) {
+		sprintf(buff, "\t%s\n", p.toString().c_str());
+		write(fd, buff, sizeof(buff));
+	}
 }

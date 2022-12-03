@@ -13,7 +13,8 @@
 #define ID_MIN 1000
 #define ID_INTERVAL 9000
 
-#define FILENAME "/data/home/qnxuser/loadInput.txt"
+#define INPUT_FILENAME "/data/home/qnxuser/loadInput.txt"
+#define OUTPUT_FILENAME "/data/home/qnxuser/history.txt"
 
 //#define MAIN_CHANNEL "mainChannel"
 #define RADAR_CHANNEL	"radarChannel"

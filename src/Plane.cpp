@@ -202,8 +202,7 @@ string Plane::toString() const
 
 PlaneInfo_t Plane::ping()
 {
-	while (coid == 0)
-		;
+	while (coid == 0);
 	Msg msg;
 	msg.hdr.type = MsgType::RADAR;
 	msg.hdr.subtype = MsgSubtype::REQ;
