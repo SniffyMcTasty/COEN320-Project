@@ -20,9 +20,9 @@ struct PlaneInfo_t
         ss << "  X=" << setw(6) << to_string(x);
         ss << "  Y=" << setw(6) << to_string(y);
         ss << "  Z=" << setw(5) << to_string(z);
-        ss << "  dX=" << setw(4) << to_string(dx);
-        ss << "  dY=" << setw(4) << to_string(dy);
-        ss << "  dZ=" << setw(4) << to_string(dz);
+        ss << "  dX=" << setw(5) << to_string(dx);
+        ss << "  dY=" << setw(5) << to_string(dy);
+        ss << "  dZ=" << setw(3) << to_string(dz);
         ss << "  FL=" << setw(3) << to_string(fl);
         ss << "  }";
         return ss.str();

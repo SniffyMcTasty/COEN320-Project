@@ -93,6 +93,9 @@ void* computerThread(void* arg) {
 	timer_delete(cpu.timerId);
 	name_detach(cpu.attach, 0);
 	name_close(cpu.coid);
+
+	char c = '\n';
+	write(cpu.fd, &c, sizeof(c));
 	close(cpu.fd);
 	pthread_exit(NULL);
 }

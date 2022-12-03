@@ -5,8 +5,8 @@
 #include "common.h"
 #include "Constants.h"
 
-#define SAFEZONE_V 3000
-#define SAFEZONE_H 1000
+#define SAFEZONE_V 1000
+#define SAFEZONE_H 3000
 
 class CpuSystem {
 
