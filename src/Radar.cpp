@@ -40,7 +40,7 @@ void* radarThread(void* arg) {
 					reply.hdr.type = MsgType::RADAR;
 					reply.hdr.subtype = MsgSubtype::REPLY;
 					reply.info = p;
-					MsgSend(radar.coid, (void*)&reply, sizeof(reply), 0, 0);
+					MsgSend(radar.cpuThreadcoid, (void*)&reply, sizeof(reply), 0, 0);
 				}
 
 				break;
@@ -79,8 +79,8 @@ void Radar::setupChannel() {
 		pthread_exit(NULL);
 	}
 
-	if ((coid = name_open(MAIN_CHANNEL, 0)) == -1) {
-		cout << "ERROR: CREATING CLIENT TO MAIN" << endl;
+	if ((cpuThreadcoid = name_open(CPU_CHANNEL, 0)) == -1) {
+		cout << "ERROR: CREATING CLIENT TO CPU" << endl;
 		pthread_exit(NULL);
 	}
 }

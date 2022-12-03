@@ -15,7 +15,7 @@ private:
 	pthread_t thread;
 //	string channel;
 	name_attach_t *attach = NULL;
-	int coid = 0;
+	int cpuThreadcoid = 0;
 //	bool _exit = false;
 
 	void setupChannel();

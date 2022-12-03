@@ -2,8 +2,7 @@
 #define CPUSYSTEM_H_
 
 #include "common.h"
-
-#define CPU_CHANNEL "CPU_CHANNEL"
+#include "Constants.h"
 
 class CpuSystem {
 
@@ -20,6 +19,7 @@ public:
 	CpuSystem();
 	int join();
 
+	vector<PlaneInfo_t> sendRadarCommand();
 };
 
 
