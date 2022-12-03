@@ -13,10 +13,9 @@ struct PlaneInfo_t
 {
     int id, x, y, z, dx, dy, dz, fl;
     friend ostream &operator<<(ostream &out, const PlaneInfo_t &info);
-    string toString() const
-    {
-        stringstream ss;
-        ss << "{";
+    string toString() const {
+    	stringstream ss;
+    	ss << "{";
         ss << "  ID=" << setw(4) << id;
         ss << "  X=" << setw(6) << to_string(x);
         ss << "  Y=" << setw(6) << to_string(y);
@@ -32,8 +31,7 @@ struct PlaneInfo_t
 
 // 4 6 6 5 4 4 4 3
 
-inline ostream &operator<<(ostream &out, const PlaneInfo_t &info)
-{
+inline ostream &operator<<(ostream &out, const PlaneInfo_t &info) {
     out << info.toString();
     return out;
 }
@@ -42,8 +40,7 @@ inline ostream &operator<<(ostream &out, const PlaneInfo_t &info)
 
 typedef struct _pulse msg_header_t;
 
-struct Msg
-{
+struct Msg {
     msg_header_t hdr;
     PlaneInfo_t info;
     float floatValue1;
