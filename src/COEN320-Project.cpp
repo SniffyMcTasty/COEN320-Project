@@ -17,6 +17,7 @@
 #include "Plane.h"
 #include "Radar.h"
 #include "common.h"
+#include "Display.h"
 
 using namespace std;
 
@@ -265,3 +266,69 @@ vector<pair<int, PlaneInfo_t>> readInputFile() {
 
 	return planes;
 }
+
+
+
+
+void sendDisplayExit() {
+	int coid = 0;
+
+	// open channel to radar thread
+    if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1)
+    	cout << "ERROR: CREATING CLIENT TO DISPLAY" << endl;
+
+    // create exit message
+	Msg msg;
+	msg.hdr.type = MsgType::EXIT;
+
+	// send exit message
+	MsgSend(coid, &msg, sizeof(msg), 0, 0);
+
+	// close the channel
+	name_close(coid);
+}
+
+
+void sendPlaneInfo(PlaneInfo_t info){
+	int coid = 0;
+
+		// open channel to radar thread
+	    if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1)
+	    	cout << "ERROR: CREATING CLIENT TO DISPLAY" << endl;
+
+	    // create exit message
+		Msg msg;
+		msg.hdr.type = MsgType::PRINT;
+		msg.info = info;
+
+		// send exit message
+		MsgSend(coid, &msg, sizeof(msg), 0, 0);
+
+		// close the channel
+		name_close(coid);
+}
+
+void sendPlaneAlert(PlaneInfo_t info){
+	int coid = 0;
+
+		// open channel to radar thread
+	    if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1)
+	    	cout << "ERROR: CREATING CLIENT TO DISPLAY" << endl;
+
+	    // create exit message
+		Msg msg;
+		msg.hdr.type = MsgType::ALERT;
+		msg.info = info;
+
+		// send exit message
+		MsgSend(coid, &msg, sizeof(msg), 0, 0);
+
+		// close the channel
+		name_close(coid);
+}
+
+
+
+
+
+
