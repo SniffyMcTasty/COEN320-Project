@@ -13,9 +13,10 @@ struct PlaneInfo_t
 {
     int id, x, y, z, dx, dy, dz, fl;
     friend ostream &operator<<(ostream &out, const PlaneInfo_t &info);
-    string toString() const {
-    	stringstream ss;
-    	ss << "{";
+    string toString() const
+    {
+        stringstream ss;
+        ss << "{";
         ss << "  ID=" << setw(4) << id;
         ss << "  X=" << setw(6) << to_string(x);
         ss << "  Y=" << setw(6) << to_string(y);
@@ -31,7 +32,8 @@ struct PlaneInfo_t
 
 // 4 6 6 5 4 4 4 3
 
-inline ostream &operator<<(ostream &out, const PlaneInfo_t &info) {
+inline ostream &operator<<(ostream &out, const PlaneInfo_t &info)
+{
     out << info.toString();
     return out;
 }
@@ -40,13 +42,16 @@ inline ostream &operator<<(ostream &out, const PlaneInfo_t &info) {
 
 typedef struct _pulse msg_header_t;
 
-struct Msg {
+struct Msg
+{
     msg_header_t hdr;
     PlaneInfo_t info;
+    float floatValue1;
+    float floatValue2;
 };
 
 enum MsgType : _Uint16t { TIMEOUT, RADAR, COMMAND, PRINT, ALERT, EXIT }; // add msgs here
-enum MsgSubtype : _Uint16t { REQ, REPLY }; // add subtypes here
+enum MsgSubtype : _Uint16t { CHANGE_SPEED, CHANGE_ALTITUDE, CHANGE_POSITION, REQ, REPLY }; // add subtypes here
 
 ////////////////////////////////////////////////// MACROS
 
@@ -64,6 +69,7 @@ enum MsgSubtype : _Uint16t { REQ, REPLY }; // add subtypes here
 
 ////////////////////////////////////////////////// UTILITY
 
-inline int randRange(int lo, int hi) {
+inline int randRange(int lo, int hi)
+{
     return rand() % (hi - lo) + lo;
 }
