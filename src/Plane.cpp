@@ -50,18 +50,22 @@ void *planeThread(void *arg)
 			break;
 
 		case MsgType::COMMAND:
+			// message type command send by the the radar to make the plane change speed
 			if (msg.hdr.subtype == MsgSubtype::CHANGE_SPEED)
 			{
 				plane.info.dx *= (1 + msg.floatValue1);
 				plane.info.dy *= (1 + msg.floatValue1);
 				plane.info.dz *= (1 + msg.floatValue1);
 			}
+			// message type command send by the the radar to make the plane change altitude
 			else if (msg.hdr.subtype == MsgSubtype::CHANGE_ALTITUDE)
 			{
 				plane.info.dz = msg.info.dz;
 				plane.changeAltFlag = true;
 				plane.finalAlt = msg.info.z;
 			}
+			// message type command send by the the radar to make the plane postion
+			// alexe this part need to be change
 			else if (msg.hdr.subtype == MsgSubtype ::CHANGE_POSITION)
 			{
 				const int &dx = plane.info.dx, &dy = plane.info.dy;
@@ -171,7 +175,7 @@ void Plane::destroyChannel()
 
 void Plane::updatePosition()
 {
-
+	// setting a flage to see if the altedue is changing
 	if (changeAltFlag && ((info.dz < 0 && info.z <= finalAlt) || (info.dz > 0 && info.z >= finalAlt)))
 	{
 		info.dz = 0;
