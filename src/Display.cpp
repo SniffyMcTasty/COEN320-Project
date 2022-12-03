@@ -43,6 +43,8 @@ void* displayThread(void* arg){
             case MsgType::EXIT:
                 cout << "Exiting Display" << endl;
                 exit = true;
+                MsgReply(rcvid, EOK, 0, 0);
+                break;
 
 		    default:
                 MsgReply(rcvid, EOK, 0, 0);
