@@ -93,63 +93,81 @@ int main() {
 	sendExit(RADAR_CHANNEL);
 	radar.join();
 
-    cout << "***** APPLICATION END *****" << endl;
+	cout << "***** APPLICATION END *****" << endl;
 	return EXIT_SUCCESS;
 }
 
-vector<PlaneInfo_t> sendRadarCommand(name_attach_t* attach) {
-	vector<PlaneInfo_t> planes;	// return vector
-    int coid = 0, replyCnt = 0;	// connection ID and cnt for number of expected radar replies
-	Msg msg;	// message for IPC
+void testPlaneCommand() {
+	Plane plane(Plane::randomInfo());
+	delay(1000);
+	int coid = name_open(plane.channel.c_str(), 0);
+	delay(5000);
+	Msg msg;
+	msg.hdr.type = MsgType::COMMAND;
+	msg.hdr.subtype = MsgSubtype::CHANGE_POSITION;
+	msg.floatValue1 = 5;
+	MsgSend(coid, (void *)&msg, sizeof(msg), 0, 0);
+	name_close(coid);
+	plane.join();
+}
+
+vector<PlaneInfo_t> sendRadarCommand(name_attach_t *attach)
+{
+	vector<PlaneInfo_t> planes; // return vector
+	int coid = 0, replyCnt = 0; // connection ID and cnt for number of expected radar replies
+	Msg msg;					// message for IPC
 
 	// open channel to Radar thread
-    if ((coid = name_open(RADAR_CHANNEL, 0)) == -1) {
-    	cout << "ERROR: CREATING CLIENT TO RADAR" << endl;
-    	return planes;
-    }
+	if ((coid = name_open(RADAR_CHANNEL, 0)) == -1)
+	{
+		cout << "ERROR: CREATING CLIENT TO RADAR" << endl;
+		return planes;
+	}
 
-    // create message for Radar Request
+	// create message for Radar Request
 	msg.hdr.type = MsgType::RADAR;
 	msg.hdr.subtype = MsgSubtype::REQ;
 	memset(&msg.info, 0, sizeof(msg.info)); // clear data in PlaneInfo
 
 	// send the message, blocks and waits for reply with return message of replyCnt
-	if (MsgSend(coid, (void*) &msg, sizeof(msg), (void*) &replyCnt, sizeof(replyCnt)) < 0)
+	if (MsgSend(coid, (void *)&msg, sizeof(msg), (void *)&replyCnt, sizeof(replyCnt)) < 0)
 		cout << "ERROR: PING REQUEST" << endl;
 
 	// print number of plane replies
-//	cout << "RADAR REQ: replies=" << replyCnt << endl;
+	//	cout << "RADAR REQ: replies=" << replyCnt << endl;
 
 	// loop for the amount of expected replies
-	for (int i = 0; i < replyCnt;) {
+	for (int i = 0; i < replyCnt;)
+	{
 		// block and wait for a message from RADAR thread (hopefully)
-		int rcvid = MsgReceive(attach->chid, (void*) &msg, sizeof(msg), NULL);
+		int rcvid = MsgReceive(attach->chid, (void *)&msg, sizeof(msg), NULL);
 
 		// IDK, WE MAY NEED THESE LINES EVENTUALLY WHEN THIS IS MOVED TO CENTRAL COMPUTER SYSTEM
-//		if (!rcvid && (msg.hdr.code == _PULSE_CODE_DISCONNECT))	{ ConnectDetach(msg.hdr.scoid);		continue; }
-//		if (msg.hdr.type == _IO_CONNECT) 						{ MsgReply(rcvid, EOK, NULL, 0);	continue; }
-//		if (msg.hdr.type > _IO_BASE && msg.hdr.type <= _IO_MAX)	{ MsgError(rcvid, ENOSYS);			continue; }
+		//		if (!rcvid && (msg.hdr.code == _PULSE_CODE_DISCONNECT))	{ ConnectDetach(msg.hdr.scoid);		continue; }
+		//		if (msg.hdr.type == _IO_CONNECT) 						{ MsgReply(rcvid, EOK, NULL, 0);	continue; }
+		//		if (msg.hdr.type > _IO_BASE && msg.hdr.type <= _IO_MAX)	{ MsgError(rcvid, ENOSYS);			continue; }
 
 		// if the received message is a Radar Reply
-		if ((msg.hdr.type == MsgType::RADAR) && (msg.hdr.subtype == MsgSubtype::REPLY)) {
+		if ((msg.hdr.type == MsgType::RADAR) && (msg.hdr.subtype == MsgSubtype::REPLY))
+		{
 			planes.push_back(msg.info); // add plane info to vector
 			MsgReply(rcvid, EOK, 0, 0); // acknowledge the message
-			i++; // increment in this IF statement, only when a plane info has been receive and added to return vector
+			i++;						// increment in this IF statement, only when a plane info has been receive and added to return vector
 		}
 	}
 
-	name_close(coid);	// close the channel
-	return planes;		// return the planes info
+	name_close(coid); // close the channel
+	return planes;	  // return the planes info
 }
 
 void sendExit(const char* channel) {
 	int coid = 0;
 
-	// open channel to radar thread
+	// open channel to thread
     if ((coid = name_open(channel, 0)) == -1)
     	cout << "ERROR: CREATING CLIENT TO RADAR" << endl;
 
-    // create exit message
+	// create exit message
 	Msg msg;
 	msg.hdr.type = MsgType::EXIT;
 
@@ -160,28 +178,37 @@ void sendExit(const char* channel) {
 	name_close(coid);
 }
 
-bool createInputFile() {
-	int fd; // file directory
-	long unsigned int sw;  // size written
+bool createInputFile()
+{
+	int fd;				  // file directory
+	long unsigned int sw; // size written
 	LoadCreationAlgorithm algo;
 
 	// open file with read, write, execute permissions and replace if existing
-	fd = creat(FILENAME, S_IRUSR | S_IWUSR | S_IXUSR );
+	fd = creat(FILENAME, S_IRUSR | S_IWUSR | S_IXUSR);
 
 	// prompt user for load
 	string input;
 	bool stop = false;
 
-	while(!stop) {
+	while (!stop)
+	{
 		cout << "Enter desired load (low, medium, high): ";
 		cin >> input;
-		if(input.compare("low") == 0) {
+		if (input.compare("low") == 0)
+		{
 			algo.createLoad(low);
-		} else if (input.compare("medium") == 0) {
+		}
+		else if (input.compare("medium") == 0)
+		{
 			algo.createLoad(medium);
-		} else if (input.compare("high") == 0) {
+		}
+		else if (input.compare("high") == 0)
+		{
 			algo.createLoad(high);
-		} else {
+		}
+		else
+		{
 			cout << "Invalid input, try again." << endl;
 			continue;
 		}
@@ -190,23 +217,25 @@ bool createInputFile() {
 
 	// write buffer to file
 	string buffer = algo.getBuffer();
-	char char_buffer[buffer.length()+1];
+	char char_buffer[buffer.length() + 1];
 	strcpy(char_buffer, buffer.c_str());
-	sw = write( fd, char_buffer, sizeof( char_buffer ) );
+	sw = write(fd, char_buffer, sizeof(char_buffer));
 
 	// test for error
-	if( sw != sizeof( char_buffer ) ) {
-		perror( "Error writing loadInput.txt" );
+	if (sw != sizeof(char_buffer))
+	{
+		perror("Error writing loadInput.txt");
 		return false;
 	}
 	cout << "Input load file created successfully" << endl;
-	close( fd );
+	close(fd);
 
 	return true;
 }
 
-vector<pair<int, PlaneInfo_t>> readInputFile() {
-	int sr;  // size read
+vector<pair<int, PlaneInfo_t>> readInputFile()
+{
+	int sr;							   // size read
 	int fd = open(FILENAME, O_RDONLY); // file directory
 
 	// read the file
@@ -215,7 +244,8 @@ vector<pair<int, PlaneInfo_t>> readInputFile() {
 
 	sr = read(fd, buffer, sizeof(buffer));
 	content += buffer;
-	while (sr == 100) {
+	while (sr == 100)
+	{
 		sr = read(fd, buffer, sizeof(buffer));
 		content += buffer;
 	}
@@ -228,7 +258,8 @@ vector<pair<int, PlaneInfo_t>> readInputFile() {
 	stringstream ss(content);
 	string line;
 	getline(ss, line); // ignore first line
-	while( getline(ss, line) ) {
+	while (getline(ss, line))
+	{
 		stringstream line_ss(line);
 		string param;
 		PlaneInfo_t info;

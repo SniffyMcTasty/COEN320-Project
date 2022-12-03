@@ -10,10 +10,11 @@ class Plane
 private:
     PlaneInfo_t info;
     pthread_t thread;
-    string channel;
     name_attach_t *attach = NULL;
     int coid = 0;
     timer_t timerId = 0;
+    bool changeAltFlag = false;
+    int finalAlt = 0;
 
     void setup();
     void setupChannel();
@@ -24,6 +25,7 @@ private:
     void updatePosition();
 
 public:
+    string channel;
     Plane(PlaneInfo_t info);
     int join();
     bool inZone();
