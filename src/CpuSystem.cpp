@@ -50,6 +50,13 @@ void* computerThread(void* arg) {
 
 		case MsgType::TIMEOUT:
 
+			cout << "Hello from CPU" << endl;
+			MsgReply(rcvid, EOK, 0, 0);
+			break;
+
+		case EXIT:
+			cout << "Exit CPU Thread" << endl;
+			exit = true;
 			MsgReply(rcvid, EOK, 0, 0);
 			break;
 
