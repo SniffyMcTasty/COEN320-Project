@@ -14,6 +14,7 @@
 
 #include "Constants.h"
 #include "LoadCreationAlgorithm.h"
+#include "CpuSystem.h"
 #include "Plane.h"
 #include "Radar.h"
 #include "common.h"
@@ -31,99 +32,78 @@ int main()
 {
 	cout << "***** APPLICATION START *****" << endl;
 
-	srand((int)time(0));
-	// if (!createInputFile())
-	// 	return EXIT_FAILURE; // file directory
+    CpuSystem cpu;
 
-	// vector<pair<int, PlaneInfo_t>> planeArrivals = readInputFile();
+    delay(15000);
 
-	// cout << planeArrivals.size() << " planes read from file" << endl;
-	// for (size_t i = 0; i < planeArrivals.size(); i++)
-	// {
-	// 	cout << "t = " << to_string(planeArrivals[i].first) << " -> " << planeArrivals[i].second << endl;
-	// }
+    sendExit(CPU_CHANNEL);
+    cpu.join();
 
-	// // create a listener channel to get radar replies (WILL BE IN CENTRAL COMPUTER CONSOLE THREAD EVENTUALLY)
-	// name_attach_t *attach = NULL;
-	// if ((attach = name_attach(NULL, MAIN_CHANNEL, 0)) == NULL)
-	// {
-	// 	cout << "ERROR: CREATING MAIN SERVER" << endl;
-	// 	return EXIT_FAILURE;
-	// }
 
-	// // airspace tracks all planes
-	// vector<Plane *> airspace;
-	// Radar radar(&airspace); // radar thread starter with reference to airspace
-	// int time = 0;
 
-	// // wait for Radar setup to complete (cant ping planes before radar is setup)
-	// while (!radar.setup)
-	// 	;
-
-	// // flag tracks if last Radar call returned any planes
-	// bool hasPlanes = false;
-
-	// // keep looping while there is still planes yet to arrive,
-	// // or once all planes have arrive, keep looping until no more planes detected by radar
-	// while (!planeArrivals.empty() || hasPlanes)
-	// {
-
-	// 	// if there is still planes left to arrive
-	// 	if (!planeArrivals.empty())
-	// 	{
-	// 		// if the arrival time of the next plane is now
-	// 		if (time >= planeArrivals.front().first)
-	// 		{
-	// 			airspace.push_back(new Plane(planeArrivals.front().second)); // get next PlaneInfo from arrivals and create Plane thread
-	// 			planeArrivals.erase(planeArrivals.begin());					 // delete info from arrivals after Plane started
-	// 		}
-	// 	}
-
-	// 	// if is true every 5 seconds, use radar to detect planes
-	// 	if (!(time % 5))
-	// 	{
-	// 		hasPlanes = false; // default no planes
-	// 		for (PlaneInfo_t i : sendRadarCommand(attach))
-	// 		{
-	// 			cout << i << endl; // just print planes for now (MUST GO TO DATA DISPLAY LATER)
-	// 			hasPlanes = true;  // set to true when at least one plane
-	// 		}
-	// 	}
-
-	// 	// delay of 1s
-	// 	delay(1000);
-	// 	time++;
-	// }
-
-	// // join every thread
-	// for (Plane *p : airspace)
-	// {
-	// 	p->join();
-	// 	delete p;
-	// }
-
-	// sendRadarExit();
-	// radar.join();
-
-	Plane plane(Plane::randomInfo());
-	delay(1000);
-	int coid = name_open(plane.channel.c_str(), 0);
-	delay(5000);
-	Msg msg;
-	msg.hdr.type = MsgType::COMMAND;
-	msg.hdr.subtype = MsgSubtype::CHANGE_POSITION;
-	msg.floatValue1 = 5;
-	MsgSend(coid, (void *)&msg, sizeof(msg), 0, 0);
-	name_close(coid);
-
-	// join every thread
-	for (Plane* p : airspace) {
-		p->join();
-		delete p;
-	}
-
-	sendExit(RADAR_CHANNEL);
-	radar.join();
+//	srand((int) time(0));
+//	if( !createInputFile() ) return EXIT_FAILURE; // file directory
+//
+//	vector<pair<int, PlaneInfo_t>> planeArrivals = readInputFile();
+//
+//	cout << planeArrivals.size() << " planes read from file" << endl;
+//	for (size_t i = 0; i < planeArrivals.size(); i++) {
+//		cout << "t = " << to_string(planeArrivals[i].first) << " -> " << planeArrivals[i].second << endl;
+//	}
+//
+//	// create a listener channel to get radar replies (WILL BE IN CENTRAL COMPUTER CONSOLE THREAD EVENTUALLY)
+//    name_attach_t *attach = NULL;
+//    if ((attach = name_attach(NULL, MAIN_CHANNEL, 0)) == NULL) {
+//    	cout << "ERROR: CREATING MAIN SERVER" << endl;
+//    	return EXIT_FAILURE;
+//    }
+//
+//    // airspace tracks all planes
+//	vector<Plane*> airspace;
+//	Radar radar(&airspace); // radar thread starter with reference to airspace
+//	int time = 0;
+//
+//	// wait for Radar setup to complete (cant ping planes before radar is setup)
+//	while (!radar.setup);
+//
+//	// flag tracks if last Radar call returned any planes
+//    bool hasPlanes = false;
+//
+//    // keep looping while there is still planes yet to arrive,
+//    // or once all planes have arrive, keep looping until no more planes detected by radar
+//	while(!planeArrivals.empty() || hasPlanes) {
+//
+//		// if there is still planes left to arrive
+//		if (!planeArrivals.empty()) {
+//			// if the arrival time of the next plane is now
+//			if (time >= planeArrivals.front().first) {
+//				airspace.push_back(new Plane(planeArrivals.front().second)); // get next PlaneInfo from arrivals and create Plane thread
+//				planeArrivals.erase(planeArrivals.begin());	// delete info from arrivals after Plane started
+//			}
+//		}
+//
+//		// if is true every 5 seconds, use radar to detect planes
+//		if (!(time % 5)) {
+//			hasPlanes = false; // default no planes
+//			for (PlaneInfo_t i : sendRadarCommand(attach)) {
+//				cout << i << endl; // just print planes for now (MUST GO TO DATA DISPLAY LATER)
+//				hasPlanes = true; // set to true when at least one plane
+//			}
+//		}
+//
+//		// delay of 1s
+//		delay(1000);
+//		time++;
+//	}
+//
+//	// join every thread
+//	for (Plane* p : airspace) {
+//		p->join();
+//		delete p;
+//	}
+//
+//	sendExit(RADAR_CHANNEL);
+//	radar.join();
 
 	cout << "***** APPLICATION END *****" << endl;
 	return EXIT_SUCCESS;
@@ -315,67 +295,16 @@ vector<pair<int, PlaneInfo_t>> readInputFile()
 }
 
 
-
-
-void sendDisplayExit() {
-	int coid = 0;
-
-	// open channel to radar thread
-    if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1)
-    	cout << "ERROR: CREATING CLIENT TO DISPLAY" << endl;
-
-    // create exit message
+void testPlaneCommand() {
+	Plane plane(Plane::randomInfo());
+	delay(1000);
+	int coid = name_open(plane.channel.c_str(), 0);
+	delay(5000);
 	Msg msg;
-	msg.hdr.type = MsgType::EXIT;
-
-	// send exit message
-	MsgSend(coid, &msg, sizeof(msg), 0, 0);
-
-	// close the channel
+	msg.hdr.type = MsgType::COMMAND;
+	msg.hdr.subtype = MsgSubtype::CHANGE_POSITION;
+	msg.floatValue1 = 5;
+	MsgSend(coid, (void *)&msg, sizeof(msg), 0, 0);
 	name_close(coid);
+	plane.join();
 }
-
-
-void sendPlaneInfo(PlaneInfo_t info){
-	int coid = 0;
-
-		// open channel to radar thread
-	    if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1)
-	    	cout << "ERROR: CREATING CLIENT TO DISPLAY" << endl;
-
-	    // create exit message
-		Msg msg;
-		msg.hdr.type = MsgType::PRINT;
-		msg.info = info;
-
-		// send exit message
-		MsgSend(coid, &msg, sizeof(msg), 0, 0);
-
-		// close the channel
-		name_close(coid);
-}
-
-void sendPlaneAlert(PlaneInfo_t info){
-	int coid = 0;
-
-		// open channel to radar thread
-	    if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1)
-	    	cout << "ERROR: CREATING CLIENT TO DISPLAY" << endl;
-
-	    // create exit message
-		Msg msg;
-		msg.hdr.type = MsgType::ALERT;
-		msg.info = info;
-
-		// send exit message
-		MsgSend(coid, &msg, sizeof(msg), 0, 0);
-
-		// close the channel
-		name_close(coid);
-}
-
-
-
-
-
-

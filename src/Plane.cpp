@@ -81,7 +81,9 @@ void *planeThread(void *arg)
 
 		case MsgType::TIMEOUT:
 			plane.updatePosition();
-			std::cout << "plane is :" << plane << std::endl;
+//			std::cout << "plane is :" << plane << std::endl;
+			MsgReply(rcvid, EOK, 0, 0);
+			break;
 
 		default:
 			MsgReply(rcvid, EOK, 0, 0);
