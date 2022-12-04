@@ -13,30 +13,6 @@ void* computerThread(void* arg) {
 		pthread_exit(NULL);
 	}
 
-	// open channel to talk to this threads server (loop-back)
-	cpu.coid = name_open(CPU_CHANNEL, 0);
-	if (cpu.coid == -1) {
-		cout << "ERROR: CREATING CPU CLIENT" << endl;
-		pthread_exit(NULL);
-	}
-
-	// timer setup
-	sigevent event;
-	event.sigev_notify = SIGEV_PULSE;
-	event.sigev_coid = cpu.coid;
-	event.sigev_code = MsgType::TIMEOUT;
-
-	if (timer_create(CLOCK_MONOTONIC, &event, &cpu.timerId) < 0) {
-		cout << "ERROR: CREATING PLANE TIMER" << endl;
-		pthread_exit(NULL);
-	}
-
-	itimerspec timerSpec{ 5, 0, 5, 0 };
-	if (timer_settime(cpu.timerId, 0, &timerSpec, NULL) < 0) {
-		cout << "ERROR: STARTING CPU TIMER" << endl;
-		pthread_exit(NULL);
-	}
-
 	cout << "Running CPU Thread. Checking for violations at interval n = " << cpu.n << "s" << endl;
 
 	int saveCounter = 0;
@@ -53,19 +29,30 @@ void* computerThread(void* arg) {
 
 		switch (msg.hdr.type) {
 
-		case MsgType::TIMEOUT:
+		case MsgType::RADAR:
 			MsgReply(rcvid, EOK, 0, 0);
-			cpu.time += 5;
+//			cpu.time += 5;
 			{
-				vector<PlaneInfo_t> planes = cpu.sendRadarCommand();
+				int cnt = msg.hdr.subtype;
+				vector<PlaneInfo_t> planes;
+
+				for (int i = 0; i < cnt;) {
+					int rcvid = MsgReceive(cpu.attach->chid, (void *)&msg, sizeof(msg), NULL);
+
+					if (msg.hdr.type == MsgType::RADAR) {
+						planes.push_back(msg.info); // add plane info to vector
+						MsgReply(rcvid, EOK, 0, 0); // acknowledge the message
+						i++;						// increment in this IF statement, only when a plane info has been receive and added to return vector
+					}
+				}
 
 				sort(planes.begin(), planes.end(), [](PlaneInfo_t left, PlaneInfo_t right) {return left.fl < right.fl; });
 
 				if (planes.empty())
-					cpu.sendPlaneToDisplay(PlaneInfo_t{}, -1, cpu.time);
+					cpu.sendPlaneToDisplay(PlaneInfo_t{}, -1, msg.intValue);
 
 				for (size_t i = 0; i < planes.size(); i++)
-					cpu.sendPlaneToDisplay(planes[i], i, cpu.time);
+					cpu.sendPlaneToDisplay(planes[i], i, msg.intValue);
 
 				if (++saveCounter >= 6) {
 					saveCounter = 0;
@@ -87,8 +74,7 @@ void* computerThread(void* arg) {
 
 			break;
 
-		case EXIT:
-			cout << "Exit CPU Thread" << endl;
+		case MsgType::EXIT:
 			exit = true;
 			MsgReply(rcvid, EOK, 0, 0);
 			break;
@@ -99,12 +85,7 @@ void* computerThread(void* arg) {
 		}
 	}
 
-	itimerspec off{ 0, 0, 0, 0 };
-	timer_settime(cpu.timerId, 0, &off, NULL);
-	timer_delete(cpu.timerId);
 	name_detach(cpu.attach, 0);
-	name_close(cpu.coid);
-
 	write(cpu.fd, "\n", sizeof("\n"));
 	close(cpu.fd);
 	pthread_exit(NULL);
@@ -116,6 +97,7 @@ Cpu::Cpu() {
 }
 
 int Cpu::join() {
+	cout << "Joining CPU Thread" << endl;
 	return pthread_join(thread, NULL);
 }
 
@@ -167,54 +149,6 @@ bool Cpu::notSafe(const PlaneInfo_t& thisPlane, const PlaneInfo_t& nextPlane) {
 	if (abs(thisPlane.y - nextPlane.y) > SAFEZONE_H) return false;
 	if (abs(thisPlane.z - nextPlane.z) > SAFEZONE_V) return false;
 	return true;
-}
-
-vector<PlaneInfo_t> Cpu::sendRadarCommand()
-{
-	vector<PlaneInfo_t> planes; // return vector
-	int coid = 0, replyCnt = 0; // connection ID and cnt for number of expected radar replies
-	Msg msg;					// message for IPC
-
-	// open channel to Radar thread
-	if ((coid = name_open(RADAR_CHANNEL, 0)) == -1) {
-		cout << "ERROR: CREATING CLIENT TO RADAR" << endl;
-		return planes;
-	}
-
-	// create message for Radar Request
-	msg.hdr.type = MsgType::RADAR;
-	msg.hdr.subtype = MsgSubtype::REQ;
-	memset(&msg.info, 0, sizeof(msg.info)); // clear data in PlaneInfo
-
-	// send the message, blocks and waits for reply with return message of replyCnt
-	if (MsgSend(coid, (void *)&msg, sizeof(msg), (void *)&replyCnt, sizeof(replyCnt)) < 0)
-		cout << "ERROR: RADAR REQUEST" << endl;
-
-	// print number of plane replies
-	//	cout << "RADAR REQ: replies=" << replyCnt << endl;
-
-	// loop for the amount of expected replies
-	for (int i = 0; i < replyCnt;)
-	{
-		// block and wait for a message from RADAR thread (hopefully)
-		int rcvid = MsgReceive(attach->chid, (void *)&msg, sizeof(msg), NULL);
-
-		// IDK, WE MAY NEED THESE LINES EVENTUALLY WHEN THIS IS MOVED TO CENTRAL COMPUTER SYSTEM
-		//		if (!rcvid && (msg.hdr.code == _PULSE_CODE_DISCONNECT))	{ ConnectDetach(msg.hdr.scoid);		continue; }
-		//		if (msg.hdr.type == _IO_CONNECT) 						{ MsgReply(rcvid, EOK, NULL, 0);	continue; }
-		//		if (msg.hdr.type > _IO_BASE && msg.hdr.type <= _IO_MAX)	{ MsgError(rcvid, ENOSYS);			continue; }
-
-		// if the received message is a Radar Reply
-		if ((msg.hdr.type == MsgType::RADAR) && (msg.hdr.subtype == MsgSubtype::REPLY))
-		{
-			planes.push_back(msg.info); // add plane info to vector
-			MsgReply(rcvid, EOK, 0, 0); // acknowledge the message
-			i++;						// increment in this IF statement, only when a plane info has been receive and added to return vector
-		}
-	}
-
-	name_close(coid); // close the channel
-	return planes;	  // return the planes info
 }
 
 void Cpu::sendPlaneToDisplay(PlaneInfo_t info, int i, int time){

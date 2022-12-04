@@ -28,8 +28,7 @@ void* commsThread(void* arg) {
 			comms.send(msg);
 			break;
 
-		case EXIT:
-			cout << "Exit CPU Thread" << endl;
+		case MsgType::EXIT:
 			exit = true;
 			MsgReply(rcvid, EOK, 0, 0);
 			break;
@@ -50,6 +49,7 @@ Comms::Comms() {
 }
 
 int Comms::join() {
+	cout << "Joining Comms Thread" << endl;
 	return pthread_join(thread, NULL);
 }
 

@@ -5,6 +5,23 @@ void* radarThread(void* arg) {
 	Radar& radar = *((Radar*)arg);
 	radar.setupChannel();
 
+	// timer setup
+	sigevent event;
+	event.sigev_notify = SIGEV_PULSE;
+	event.sigev_coid = radar.coid;
+	event.sigev_code = MsgType::TIMEOUT;
+
+	if (timer_create(CLOCK_MONOTONIC, &event, &radar.timerId) < 0) {
+		cout << "ERROR: CREATING PLANE TIMER" << endl;
+		pthread_exit(NULL);
+	}
+
+	itimerspec timerSpec{ 5, 0, 5, 0 };
+	if (timer_settime(radar.timerId, 0, &timerSpec, NULL) < 0) {
+		cout << "ERROR: STARTING CPU TIMER" << endl;
+		pthread_exit(NULL);
+	}
+
 	cout << "Running Radar Thread" << endl;
 
 	bool exit = false;
@@ -20,34 +37,33 @@ void* radarThread(void* arg) {
 
 		switch (msg.hdr.type) {
 
-		case MsgType::RADAR:
-			if (msg.hdr.subtype == MsgSubtype::REQ) {
+		case MsgType::TIMEOUT:
+		{
+			radar.time += 5;
+			vector<Plane*> planes;
+			planes = radar.primaryPulse();
 
-				vector<Plane*> planes;
-				planes = radar.primaryPulse();
+			vector<PlaneInfo_t> planeStats;
+			for (Plane* plane : planes)
+				planeStats.push_back(radar.secondary(plane));
 
-				vector<PlaneInfo_t> planeStats;
-				for (Plane* plane : planes)
-					planeStats.push_back(radar.secondary(plane));
+			msg.hdr.type = RADAR;
+			msg.hdr.subtype = planeStats.size();
+			msg.intValue = radar.time;
+			memset(&msg.info, 0, sizeof(msg.info));
+			MsgSend(radar.cpuThreadcoid, &msg, sizeof(msg), 0, 0);
 
-				int replyCnt = planeStats.size();
-				MsgReply(rcvid, EOK, (void*) &replyCnt, sizeof(replyCnt));
-
-				for (PlaneInfo_t p : planeStats) {
-					Msg reply;
-					reply.hdr.type = MsgType::RADAR;
-					reply.hdr.subtype = MsgSubtype::REPLY;
-					reply.info = p;
-					MsgSend(radar.cpuThreadcoid, (void*)&reply, sizeof(reply), 0, 0);
-				}
-
-				break;
+			for (PlaneInfo_t p : planeStats) {
+				msg.info = p;
+				MsgSend(radar.cpuThreadcoid, &msg, sizeof(msg), 0, 0);
 			}
+		}
 			break;
 
 		case MsgType::EXIT:
-			cout << "Exit Radar Thread" << endl;
 			exit = true;
+			MsgReply(rcvid, EOK, 0, 0);
+			break;
 
 		default:
 			MsgReply(rcvid, EOK, 0, 0);
@@ -55,6 +71,9 @@ void* radarThread(void* arg) {
 		}
 	}
 
+	itimerspec off{ 0, 0, 0, 0 };
+	timer_settime(radar.timerId, 0, &off, NULL);
+	timer_delete(radar.timerId);
 	radar.destroyChannel();
 	pthread_exit(NULL);
 }
@@ -66,12 +85,18 @@ Radar::Radar(vector<Plane*>* planes) {
 }
 
 int Radar::join() {
+	cout << "Joining Radar Thread" << endl;
 	return pthread_join(thread, NULL);
 }
 
 void Radar::setupChannel() {
 	if ((attach = name_attach(NULL, RADAR_CHANNEL, 0)) == NULL) {
 		cout << "ERROR: CREATING RADAR SERVER" << endl;
+		pthread_exit(NULL);
+	}
+
+	if ((coid = name_open(RADAR_CHANNEL, 0)) == -1) {
+		cout << "ERROR: CREATING RADAR LOOPBACK" << endl;
 		pthread_exit(NULL);
 	}
 

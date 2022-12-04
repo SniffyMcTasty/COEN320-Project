@@ -19,8 +19,7 @@ vector<pair<int, PlaneInfo_t>> readInputFile();
 pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER; // shared mutex for printing/reading
 vector<Plane*> airspace; // airspace tracks all planes
 
-int main()
-{
+int main() {
 	cout << "***** APPLICATION START *****" << endl;
 
 	srand((int) time(0));
@@ -34,6 +33,8 @@ int main()
 	for (size_t i = 0; i < planeArrivals.size(); i++) {
 		cout << "t = " << planeArrivals[i].first << " -> " << planeArrivals[i].second << endl;
 	}
+
+	planeArrivals.push_back({3, Plane::randomInfo()});
 
 	bool exit = false;
 	Cpu cpu;
@@ -66,21 +67,20 @@ int main()
 
 	// join every thread
 	for (Plane* p : airspace) {
-		if (p->inZone())
+		if (exit && p->inZone())
 			console.sendExit(p->getChannel());
 		p->join();
 		delete p;
 	}
 
-	console.join();
-
-	console.sendExit(CPU_CHANNEL);
 	console.sendExit(RADAR_CHANNEL);
+	console.sendExit(CPU_CHANNEL);
 	console.sendExit(COMMS_CHANNEL);
 	console.sendExit(DISPLAY_CHANNEL);
 
-	comms.join();
+	console.join();
 	cpu.join();
+	comms.join();
 	radar.join();
 	display.join();
 
@@ -103,7 +103,7 @@ bool createInputFile()
 
 	while (!stop)
 	{
-		cout << "Enter desired load (low, medium, high): ";
+		cout << "Enter desired load (low, medium, high, overload): ";
 		cin >> input;
 		if (input.compare("low") == 0) {
 			algo.createLoad(low);

@@ -40,8 +40,9 @@ void* consoleThread(void* arg) {
 			else if (buffer.find("changePos") != string::npos)
 				console.parsePosCmd(buffer);
 			else if (buffer.find("exit") != string::npos) {
-				console.exit = true;
 				console.mainExit = true;
+				exit(EXIT_SUCCESS);
+				break;
 			}
 			else
 				buffer = "* INVALID CMD: " + buffer;
@@ -86,30 +87,39 @@ void* consoleThread(void* arg) {
 		refresh();
 		pthread_mutex_unlock(&mtx);
 	}
-	endwin();
+
 	write(fd, "\n", sizeof("\n"));
 	close(fd);
+	clear();
+	endwin();
 
-	cout << "Exit Console Thread" << endl;
 	pthread_exit(NULL);
 }
 
-Console::Console(bool exit) : mainExit{ exit } {
+Console::Console(bool& exit) : mainExit{ exit } {
 	if (pthread_create(&thread, NULL, consoleThread, (void *)this))
 		cout << "ERROR: CREATING CONSOLE THREAD" << endl;
 }
 
 int Console::join() {
 	int r, c;
-	string end = "Simulation over. Hit any key to exit.";
+	string bar = "*******************************************";
+	string bor = "*                                         *";
+	string end = "*  Simulation over. Hit any key to exit.  *";
 
 	pthread_mutex_lock(&mtx);
 	getmaxyx(stdscr, r, c);
+	mvprintw(r/2 - 2, (c - bar.size())/2, bar.c_str());
+	mvprintw(r/2 - 1, (c - bor.size())/2, bor.c_str());
 	mvprintw(r/2, (c - end.size())/2, end.c_str());
+	mvprintw(r/2 + 1, (c - bor.size())/2, bor.c_str());
+	mvprintw(r/2 + 2, (c - bar.size())/2, bar.c_str());
 	while(getch() == ERR);
     pthread_mutex_unlock(&mtx);
 
     exit = true;
+
+    cout << "Joining Console Thread" << endl;
 	return pthread_join(thread, NULL);
 }
 

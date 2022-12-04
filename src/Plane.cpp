@@ -148,6 +148,10 @@ Plane::Plane(PlaneInfo_t info) : info{info} {
 }
 
 int Plane::join() {
+	pthread_mutex_lock(&mtx);
+	mvprintw(2, getcurx(stdscr) - ALERT_GAP - 18, "* Joining Plane Thread");
+	refresh();
+	pthread_mutex_unlock(&mtx);
 	return pthread_join(thread, NULL);
 }
 
@@ -227,7 +231,6 @@ string Plane::toString() const {
 }
 
 PlaneInfo_t Plane::ping() {
-	while (coid == 0);
 	Msg msg;
 	msg.hdr.type = MsgType::RADAR;
 	msg.hdr.subtype = MsgSubtype::REQ;

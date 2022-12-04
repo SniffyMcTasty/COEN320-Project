@@ -15,7 +15,7 @@ private:
 	bool& mainExit;
 
 public:
-	Console(bool mainExit);
+	Console(bool& mainExit);
 	int join();
 
 	void parseWindowCmd(string& buffer);

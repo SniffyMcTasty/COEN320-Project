@@ -46,7 +46,7 @@ void* displayThread(void* arg){
 			pthread_mutex_lock(&mtx);
 			getyx(stdscr, display.r, display.c);
 			if ((short)msg.hdr.subtype <= 0) {
-				mvprintw(2, 2, "[t=%d] CPU Radar Results:", msg.intValue);
+				mvprintw(2, 2, "[t=%d] Radar Results:", msg.intValue);
 				for (int i = 3; i < rowRadar + 1; i++) {
 					move(i, 1);
 					for (int j = 0; j < display.cols - ALERT_GAP - 1; j++)
@@ -92,7 +92,6 @@ void* displayThread(void* arg){
 			break;
 
 		case MsgType::EXIT:
-			cout << "Exit Display Thread" << endl;
 			exit = true;
 			MsgReply(rcvid, EOK, 0, 0);
 			break;
@@ -115,6 +114,7 @@ Display::Display() {
 }
 
 int Display::join() {
+	cout << "Joining Display Thread" << endl;
 	return pthread_join(thread, NULL);
 }
 

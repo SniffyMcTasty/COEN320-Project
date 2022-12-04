@@ -13,16 +13,16 @@ void LoadAlgo::createLoad(Load load) {
 
 	// explicitly setting number of Aircrafts and IO traffic by load
 	if(load == low){
-		nbr_planes = randRange(20, 39); // ranges from 20 to 40
+		nbr_planes = randRange(20, 59); // ranges from 20 to 40
 		interval = 5;
 	} else if(load == medium) {
-		nbr_planes = randRange(40, 59); // ranges from 40 to 60
+		nbr_planes = randRange(60, 99); // ranges from 40 to 60
 		interval = 4;
 	} else if(load == high) {
-		nbr_planes = randRange(60, 79); // ranges from 60 to 79
+		nbr_planes = randRange(100, 139); // ranges from 60 to 79
 		interval = 3;
 	} else if (load == overload) {
-		nbr_planes = randRange(80, 100);// ranges from 80 to 100
+		nbr_planes = randRange(140, 200);// ranges from 80 to 100
 		interval = 2;
 	}
 

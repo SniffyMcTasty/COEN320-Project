@@ -12,6 +12,9 @@ class Radar {
 private:
     vector<Plane*>* airspace;
 	pthread_t thread;
+	int coid = 0;
+	timer_t timerId;
+	int time = 0;
 //	string channel;
 	name_attach_t *attach = NULL;
 	int cpuThreadcoid = 0;
