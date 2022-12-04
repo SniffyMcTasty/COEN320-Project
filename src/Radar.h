@@ -24,11 +24,11 @@ private:
 public:
 	Radar(vector<Plane*>* planes);
 	int join();
-	vector<Plane*> primary();
+	vector<Plane*> primaryPulse();
 	PlaneInfo_t secondary(Plane* plane);
 
 	void getPlanes();
 //	void exit();
 
-	bool setup = false;
+//	bool setup = false;
 };

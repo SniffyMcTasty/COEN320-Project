@@ -9,7 +9,12 @@ void *planeThread(void *arg)
 	Plane &plane = *((Plane *)arg);
 	plane.setup();
 
-	cout << "* NEW PLANE: " << plane << endl;
+	int rows, cols;
+	getmaxyx(stdscr, rows, cols);
+
+//	mvprintw(1, cols - 20, "* NEW PLANE: %d ", plane.info.id);
+//	refresh();
+//	cout << "* NEW PLANE: " << plane << endl;
 
 	Msg msg;
 	while (plane.inZone())
@@ -94,7 +99,9 @@ void *planeThread(void *arg)
 	}
 
 	plane.destroy();
-	cout << "** PLANE EXIT: ID=" << plane.info.id << endl;
+
+//	mvprintw(2, cols - 22, "** PLANE EXIT: %d ", plane.info.id);
+//	refresh();
 	pthread_exit(NULL);
 }
 

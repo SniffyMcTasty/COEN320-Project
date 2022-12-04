@@ -12,13 +12,16 @@
 #include <utility>
 #include <sstream>
 
+// qcc -lang-c++ -Vgcc_ntox86_64 -c -Wp,-MMD,build/x86_64-debug/src/testNcurses.d,-MT,build/x86_64-debug/src/testNcurses.o -o build/x86_64-debug/src/testNcurses.o  -Wall -fmessage-length=0 -g -O0 -fno-builtin  src/testNcurses.cpp
+
 #include "Constants.h"
 #include "LoadCreationAlgorithm.h"
-#include "CpuSystem.h"
 #include "Plane.h"
 #include "Radar.h"
 #include "common.h"
+#include "Cpu.h"
 #include "Display.h"
+#include "Console.h"
 
 using namespace std;
 
@@ -29,6 +32,8 @@ void sendExit(const char* channel);
 void parseAltCmd(string& input, int& id, int& alt);
 void changeAlt(int id, int z);
 
+pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+
 int main()
 {
 	cout << "***** APPLICATION START *****" << endl;
@@ -37,32 +42,31 @@ int main()
 
 	if( !createInputFile() ) return EXIT_FAILURE; // file directory
 
-	vector<pair<int, PlaneInfo_t>> planeArrivals = readInputFile();
+//	vector<pair<int, PlaneInfo_t>> planeArrivals = readInputFile();
+//
+//	cout << planeArrivals.size() << " planes read from file" << endl;
+//	for (size_t i = 0; i < planeArrivals.size(); i++) {
+//		cout << "t = " << to_string(planeArrivals[i].first) << " -> " << planeArrivals[i].second << endl;
+//	}
 
-	cout << planeArrivals.size() << " planes read from file" << endl;
-	for (size_t i = 0; i < planeArrivals.size(); i++) {
-		cout << "t = " << to_string(planeArrivals[i].first) << " -> " << planeArrivals[i].second << endl;
-	}
-
-//	vector<pair<int, PlaneInfo_t>> planeArrivals;
-//	planeArrivals.push_back({0, {111, AIRSPACE_X / 2, 0, 30000, 0, randRange(MIN_SPEED, MAX_SPEED), 0, 300}});
-//	planeArrivals.push_back({0, {222, AIRSPACE_X / 2, UPPER_Y, 30000, 0, -randRange(MIN_SPEED, MAX_SPEED), 0, 300}});
+	vector<pair<int, PlaneInfo_t>> planeArrivals;
+//	planeArrivals.push_back({0, {111, AIRSPACE_X / 2, 0, 25000, 0, 1000, 0, 300}});
+	planeArrivals.push_back({0, {2222, AIRSPACE_X / 2, UPPER_Y, 30000, 0, 0, 500, 300}});
 
     // airspace tracks all planes
 	vector<Plane*> airspace;
-	CpuSystem cpu;
-	delay(500);
-	Display display;
+	Cpu cpu;
 	delay(500);
 	Radar radar(&airspace); // radar thread started with reference to airspace
 	delay(500);
+	Console console;
+	delay(500);
+	Display display;
+	delay(500);
 	int time = 0;
 
-	// wait for Radar setup to complete (cant ping planes before radar is setup)
-//	while (!radar.setup);
-
-    // keep looping while there is still planes yet to arrive,
-    // or once all planes have arrive, keep looping until no more planes detected by radar
+//     keep looping while there is still planes yet to arrive,
+//     or once all planes have arrive, keep looping until no more planes detected by radar
 	while(!planeArrivals.empty()) {
 
 		// if there is still planes left to arrive
@@ -79,31 +83,31 @@ int main()
 		time++;
 	}
 
-	while (true) {
-		string input = "";
-		getline(cin, input);
 
-		if (input.find("chAlt") != string::npos) {
 
-			int id;
-			int alt;
-
-			parseAltCmd(input, id, alt);
-
-			if (id < 10000 && (alt >= LOWER_Z && alt <= UPPER_Z)) {
-				cout << "Sending command: chAlt " << id << " " << alt << endl;
-				changeAlt(id, alt);
-			}
-			else
-				cout << "ERROR: bad command inputs" << endl;
-		}
-
-		if (input.find("exit") != string::npos) {
-			break;
-		}
-	}
-
-//	chAlt 111 3500 500
+//	while (true) {
+//		string input = "";
+//		getline(cin, input);
+//
+//		if (input.find("chAlt") != string::npos) {
+//
+//			int id;
+//			int alt;
+//
+//			parseAltCmd(input, id, alt);
+//
+//			if (id < 10000 && (alt >= LOWER_Z && alt <= UPPER_Z)) {
+//				cout << "Sending command: chAlt " << id << " " << alt << endl;
+//				changeAlt(id, alt);
+//			}
+//			else
+//				cout << "ERROR: bad command inputs" << endl;
+//		}
+//
+//		if (input.find("exit") != string::npos) {
+//			break;
+//		}
+//	}
 
 	// join every thread
 	for (Plane* p : airspace) {
@@ -111,14 +115,17 @@ int main()
 		delete p;
 	}
 
+	console.join();
+
 	sendExit(CPU_CHANNEL);
 	cpu.join();
+
+	sendExit(RADAR_CHANNEL);
+	radar.join();
 
 	sendExit(DISPLAY_CHANNEL);
 	display.join();
 
-	sendExit(RADAR_CHANNEL);
-	radar.join();
 
 	cout << "***** APPLICATION END *****" << endl;
 	return EXIT_SUCCESS;
@@ -186,8 +193,7 @@ bool createInputFile()
 	sw = write(fd, char_buffer, sizeof(char_buffer));
 
 	// test for error
-	if (sw != sizeof(char_buffer))
-	{
+	if (sw != sizeof(char_buffer)) {
 		perror("Error writing loadInput.txt");
 		return false;
 	}

@@ -7,7 +7,12 @@
 #include <pthread.h>
 #include <signal.h>
 #include <sys/dispatch.h>
+#include <ncurses.h>
+#include <algorithm>
+#include <fcntl.h>
 using namespace std;
+
+extern pthread_mutex_t mtx;
 
 struct PlaneInfo_t
 {
@@ -44,7 +49,7 @@ struct Msg {
     msg_header_t hdr;
     PlaneInfo_t info;
     float floatValue1;
-    float floatValue2;
+    int time;
 };
 
 enum MsgType : _Uint16t { TIMEOUT, RADAR, COMMAND, PRINT, ALERT, EXIT }; // add msgs here

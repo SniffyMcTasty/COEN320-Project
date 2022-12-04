@@ -1,8 +1,8 @@
-#include "CpuSystem.h"
+#include "Cpu.h"
 
 void* computerThread(void* arg) {
 
-	CpuSystem& cpu = *((CpuSystem*)arg);
+	Cpu& cpu = *((Cpu*)arg);
 
 	cpu.fd = creat(OUTPUT_FILENAME, S_IRUSR | S_IWUSR | S_IXUSR);
 
@@ -37,13 +37,13 @@ void* computerThread(void* arg) {
 		pthread_exit(NULL);
 	}
 
-	cout << "CPU Thread Running. Checking for violations at interval n = " << cpu.n << "s" << endl;
+	cout << "Running CPU Thread. Checking for violations at interval n = " << cpu.n << "s" << endl;
 
-	Msg msg;
 	int saveCounter = 0;
 	bool exit = false;
+
 	while (!exit) {
-		memset(&msg, 0, sizeof(msg));
+		Msg msg;
 		int rcvid = MsgReceive(cpu.attach->chid, &msg, sizeof(msg), NULL);
 
 		if (rcvid == -1) break;
@@ -54,17 +54,18 @@ void* computerThread(void* arg) {
 		switch (msg.hdr.type) {
 
 		case MsgType::TIMEOUT:
-			cpu.time += 5;
-			cout << "[t=" << cpu.time << "] CPU: Send radar command" << endl;
 			MsgReply(rcvid, EOK, 0, 0);
+			cpu.time += 5;
 			{
 				vector<PlaneInfo_t> planes = cpu.sendRadarCommand();
 
-				if (planes.empty())
-					cout << "No Planes" << endl;
+				sort(planes.begin(), planes.end(), [](PlaneInfo_t left, PlaneInfo_t right) {return left.fl < right.fl; });
 
-				for (PlaneInfo_t p : planes)
-					cpu.sendToDisplay(p);
+				if (planes.empty())
+					cpu.sendToDisplay(PlaneInfo_t{}, -1, cpu.time);
+
+				for (size_t i = 0; i < planes.size(); i++)
+					cpu.sendToDisplay(planes[i], i, cpu.time);
 
 				if (++saveCounter >= 6) {
 					saveCounter = 0;
@@ -100,16 +101,16 @@ void* computerThread(void* arg) {
 	pthread_exit(NULL);
 }
 
-CpuSystem::CpuSystem() {
+Cpu::Cpu() {
 	if (pthread_create(&thread, NULL, computerThread, (void*)this))
 		cout << "ERROR: MAKING CPU THREAD" << endl;
 }
 
-int CpuSystem::join() {
+int Cpu::join() {
 	return pthread_join(thread, NULL);
 }
 
-void CpuSystem::storeAirspace(const vector<PlaneInfo_t>& planes) {
+void Cpu::storeAirspace(const vector<PlaneInfo_t>& planes) {
 	char buff[128];
 	memset(buff, 0, sizeof(buff));
 	sprintf(buff, "t=%d:\n", time);
@@ -126,11 +127,11 @@ void CpuSystem::storeAirspace(const vector<PlaneInfo_t>& planes) {
 	}
 }
 
-void CpuSystem::checkViolations(const vector<PlaneInfo_t>& planes) {
+void Cpu::checkViolations(const vector<PlaneInfo_t>& planes) {
 	for (size_t i = 0; i < planes.size(); i++) {
 		for (size_t j = i + 1; j < planes.size(); j++) {
 
-			for (int t = 0; t < n; t += 1) {
+			for (int t = 0; t < min(n, 180); t += 1) {
 				PlaneInfo_t thisPlane = calculatePosition(planes[i], t);
 				PlaneInfo_t nextPlane = calculatePosition(planes[j], t);
 
@@ -143,7 +144,7 @@ void CpuSystem::checkViolations(const vector<PlaneInfo_t>& planes) {
 	}
 }
 
-PlaneInfo_t CpuSystem::calculatePosition(const PlaneInfo_t& plane, int t) {
+PlaneInfo_t Cpu::calculatePosition(const PlaneInfo_t& plane, int t) {
 	PlaneInfo_t position = plane;
 	position.x += position.dx * t;
 	position.y += position.dy * t;
@@ -151,7 +152,7 @@ PlaneInfo_t CpuSystem::calculatePosition(const PlaneInfo_t& plane, int t) {
 	return position;
 }
 
-bool CpuSystem::notSafe(const PlaneInfo_t& thisPlane, const PlaneInfo_t& nextPlane) {
+bool Cpu::notSafe(const PlaneInfo_t& thisPlane, const PlaneInfo_t& nextPlane) {
 	// safe zone is box around plane with l=w=3000 and h=1000
 	if (abs(thisPlane.x - nextPlane.x) > SAFEZONE_H) return false;
 	if (abs(thisPlane.y - nextPlane.y) > SAFEZONE_H) return false;
@@ -159,7 +160,7 @@ bool CpuSystem::notSafe(const PlaneInfo_t& thisPlane, const PlaneInfo_t& nextPla
 	return true;
 }
 
-vector<PlaneInfo_t> CpuSystem::sendRadarCommand()
+vector<PlaneInfo_t> Cpu::sendRadarCommand()
 {
 	vector<PlaneInfo_t> planes; // return vector
 	int coid = 0, replyCnt = 0; // connection ID and cnt for number of expected radar replies
@@ -178,7 +179,7 @@ vector<PlaneInfo_t> CpuSystem::sendRadarCommand()
 
 	// send the message, blocks and waits for reply with return message of replyCnt
 	if (MsgSend(coid, (void *)&msg, sizeof(msg), (void *)&replyCnt, sizeof(replyCnt)) < 0)
-		cout << "ERROR: PING REQUEST" << endl;
+		cout << "ERROR: RADAR REQUEST" << endl;
 
 	// print number of plane replies
 	//	cout << "RADAR REQ: replies=" << replyCnt << endl;
@@ -207,7 +208,7 @@ vector<PlaneInfo_t> CpuSystem::sendRadarCommand()
 	return planes;	  // return the planes info
 }
 
-void CpuSystem::sendToDisplay(PlaneInfo_t info){
+void Cpu::sendToDisplay(PlaneInfo_t info, int i, int time){
 	int coid = 0;
 
 	// open channel to display thread
@@ -217,7 +218,9 @@ void CpuSystem::sendToDisplay(PlaneInfo_t info){
 	// create exit message
 	Msg msg;
 	msg.hdr.type = MsgType::PRINT;
+	msg.hdr.subtype = i;
 	msg.info = info;
+	msg.time = time;
 
 	// send exit message
 	MsgSend(coid, &msg, sizeof(msg), 0, 0);
@@ -226,7 +229,7 @@ void CpuSystem::sendToDisplay(PlaneInfo_t info){
 	name_close(coid);
 }
 
-void CpuSystem::alertDisplay(int id1, int id2, int t) {
+void Cpu::alertDisplay(int id1, int id2, int t) {
 	int coid = 0;
 
 	// open channel to display thread

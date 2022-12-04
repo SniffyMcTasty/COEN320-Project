@@ -1,14 +1,14 @@
-#ifndef CPUSYSTEM_H_
-#define CPUSYSTEM_H_
+#ifndef CPU_H_
+#define CPU_H_
 
-#include <fcntl.h>
+
 #include "common.h"
 #include "Constants.h"
 
 #define SAFEZONE_V 1000
 #define SAFEZONE_H 3000
 
-class CpuSystem {
+class Cpu {
 
 	friend void* computerThread(void * arg);
 
@@ -21,8 +21,9 @@ private:
 	int fd;
 	int n = 180;
 
+
 public:
-	CpuSystem();
+	Cpu();
 	int join();
 
 	void storeAirspace(const vector<PlaneInfo_t>& planes);
@@ -33,7 +34,7 @@ public:
 
 	vector<PlaneInfo_t> sendRadarCommand();
 
-	void sendToDisplay(PlaneInfo_t info);
+	void sendToDisplay(PlaneInfo_t info, int i, int time);
 	void alertDisplay(int id1, int id2, int t);
 
 

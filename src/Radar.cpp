@@ -5,8 +5,7 @@ void* radarThread(void* arg) {
 	Radar& radar = *((Radar*)arg);
 	radar.setupChannel();
 
-	cout << "Radar Thread Running" << endl;
-	radar.setup = true;
+	cout << "Running Radar Thread" << endl;
 
 	bool exit = false;
 	while (!exit) {
@@ -25,8 +24,7 @@ void* radarThread(void* arg) {
 			if (msg.hdr.subtype == MsgSubtype::REQ) {
 
 				vector<Plane*> planes;
-				planes = radar.primary();
-//				radar.noPlanes = planes.empty();
+				planes = radar.primaryPulse();
 
 				vector<PlaneInfo_t> planeStats;
 				for (Plane* plane : planes)
@@ -48,7 +46,7 @@ void* radarThread(void* arg) {
 			break;
 
 		case MsgType::EXIT:
-			cout << "Exiting Radar Thread" << endl;
+			cout << "Exit Radar Thread" << endl;
 			exit = true;
 
 		default:
@@ -59,7 +57,6 @@ void* radarThread(void* arg) {
 	}
 
 	radar.destroyChannel();
-	cout << "Radar Thread Exiting" << endl;
 	pthread_exit(NULL);
 }
 
@@ -90,7 +87,7 @@ void Radar::destroyChannel() {
 	name_detach(attach, 0);
 }
 
-vector<Plane*> Radar::primary() {
+vector<Plane*> Radar::primaryPulse() {
 	vector<Plane*> planesInZone;
 	for (Plane* p : *airspace)
 		if (p->inZone())

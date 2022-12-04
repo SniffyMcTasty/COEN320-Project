@@ -1,8 +1,0 @@
-#ifndef OPERATORCONSOLE_H_
-#define OPERATORCONSOLE_H_
-
-
-
-
-
-#endif /* OPERATORCONSOLE_H_ */
