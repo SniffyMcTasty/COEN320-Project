@@ -27,6 +27,19 @@ void *planeThread(void *arg) {
 			}
 			break;
 
+		case MsgType::INFO:
+			MsgReply(rcvid, EOK, 0, 0);
+			msg.hdr.subtype = MsgSubtype::REPLY;
+			msg.info = plane.info;
+			int coid;
+			if ((coid = name_open(COMMS_CHANNEL, 0)) == -1) {
+				cout << "ERROR: CREATING CLIENT TO COMMS" << endl;
+				break;
+			}
+			MsgSend(coid, &msg, sizeof(msg), 0, 0);
+			name_close(coid);
+			break;
+
 		case MsgType::COMMAND:
 			MsgReply(rcvid, EOK, 0, 0); // send the eok because it was blocked
 			// message type command send by the the radar to make the plane change speed

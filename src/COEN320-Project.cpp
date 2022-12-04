@@ -1,7 +1,3 @@
-
-// TODO: Make exit command kill all planes
-// TODO: plane info command
-
 #include "common.h"
 #include "Plane.h"
 #include "LoadAlgo.h"
@@ -34,20 +30,12 @@ int main() {
 		cout << "t = " << planeArrivals[i].first << " -> " << planeArrivals[i].second << endl;
 	}
 
-//	for (int t = 0; t < 200; t++)
-//		planeArrivals.push_back({t, Plane::randomInfo()});
-
 	bool exit = false;
 	Cpu cpu;
-	delay(25);
 	Radar radar(&airspace); // radar thread started with reference to airspace
-	delay(25);
 	Console console(exit);
-	delay(25);
 	Comms comms;
-	delay(25);
 	Display display;
-	delay(25);
 	int time = 0;
 
 	cpu.sendWindowToDisplay();
@@ -61,8 +49,7 @@ int main() {
 			planeArrivals.erase(planeArrivals.begin());	// delete info from arrivals after Plane started
 		}
 
-		// delay of 1s
-		delay(1000);
+		delay(1000); // delay of 1s
 		time++;
 	}
 

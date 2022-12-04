@@ -39,6 +39,8 @@ void* consoleThread(void* arg) {
 				console.parseAltCmd(buffer);
 			else if (buffer.find("changePos") != string::npos)
 				console.parsePosCmd(buffer);
+			else if (buffer.find("info") != string::npos)
+				console.parseInfoCmd(buffer);
 			else if (buffer.find("exit") != string::npos) {
 				console.mainExit = true;
 				console.exit = true;
@@ -46,7 +48,7 @@ void* consoleThread(void* arg) {
 			else
 				buffer = "* INVALID CMD: " + buffer;
 
-			if (last.size() >= 4) {
+			if (last.size() >= 3) {
 				last.pop_back();
 				last.push_front(buffer);
 			} else {
@@ -70,13 +72,15 @@ void* consoleThread(void* arg) {
 				buffer = buffer.substr(0, size - 1);
 			}
 		}
-		else if ((c == ' ') || (c == '-') || (c == '.') || (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
-			buffer += c;
+		else if (buffer.size() < 64) {
+			if ((c == ' ') || (c == '-') || (c == '.') || (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
+				buffer += c;
+		}
 
 		pthread_mutex_lock(&mtx);
 		for (size_t i = 0; i < last.size(); i++) {
 			move(48 - i, 2);
-			for (int j = 2; j < getmaxx(stdscr) - ALERT_GAP; j++)
+			for (int j = 2; j < (getmaxx(stdscr) - ALERT_GAP) / 2; j++)
 				printw(" ");
 			mvprintw(48 - i, 2, "%s", last[i].c_str());
 		}
@@ -192,6 +196,23 @@ void Console::parsePosCmd(string& buffer) {
 	}
 }
 
+void Console::parseInfoCmd(string& buffer) {
+	stringstream ss(buffer);
+	string s;
+	ss >> s;
+	ss >> s;
+	try {
+		int id = stoi(s);
+		if (id > 0 && id < 10000)
+			dispInfo(id);
+		else
+			buffer = "* BAD ARG: " + buffer + ". Accepted values: 0 < id < 10000.";
+	} catch (...) {
+		buffer = "* INVALID ARG(s): " + buffer + ". Requires ID.";
+	}
+}
+
+
 void Console::changeWindow(int n) {
 	int coid;
 
@@ -251,6 +272,20 @@ void Console::changePos(int id, float angle) {
 	msg.hdr.subtype = MsgSubtype::CHANGE_POSITION;
 	msg.info.id = id;
 	msg.doubleValue = angle;
+	MsgSend(coid, &msg, sizeof(msg), 0, 0);
+	name_close(coid);
+}
+
+void Console::dispInfo(int id) {
+	int coid;
+	if ((coid = name_open(CPU_CHANNEL, 0)) == -1) {
+		cout << "ERROR: CREATING CLIENT TO COMMS" << endl;
+		return;
+	}
+	Msg msg;
+	msg.hdr.type = MsgType::INFO;
+	msg.hdr.subtype = MsgSubtype::REQ;
+	msg.info.id = id;
 	MsgSend(coid, &msg, sizeof(msg), 0, 0);
 	name_close(coid);
 }

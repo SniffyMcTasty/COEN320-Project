@@ -74,6 +74,14 @@ void* computerThread(void* arg) {
 
 			break;
 
+		case MsgType::INFO:
+			MsgReply(rcvid, EOK, 0, 0);
+			if (msg.hdr.subtype == MsgSubtype::REQ)
+				cpu.sendToComms(msg);
+			else if (msg.hdr.subtype == MsgSubtype::REPLY)
+				cpu.sendToDisplay(msg);
+			break;
+
 		case MsgType::EXIT:
 			exit = true;
 			MsgReply(rcvid, EOK, 0, 0);
@@ -212,6 +220,16 @@ void Cpu::sendWindowToDisplay() {
 
 	MsgSend(coid, &msg, sizeof(msg), 0, 0);
 
+	name_close(coid);
+}
+
+void Cpu::sendToDisplay(Msg msg) {
+	int coid;
+	if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1) {
+		cout << "ERROR: CREATING CLIENT TO DISPLAY" << endl;
+		return;
+	}
+	MsgSend(coid, &msg, sizeof(msg), 0, 0);
 	name_close(coid);
 }
 

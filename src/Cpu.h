@@ -30,4 +30,5 @@ public:
 	void sendWindowToDisplay();
 
 	void sendToComms(Msg msg);
+	void sendToDisplay(Msg msg);
 };

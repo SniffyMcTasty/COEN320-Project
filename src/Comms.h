@@ -16,4 +16,5 @@ public:
     int join();
 
     void send(Msg msg);
+    void sendToCpu(Msg msg);
 };

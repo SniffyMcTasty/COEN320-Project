@@ -15,7 +15,7 @@
 using namespace std;
 
 #define PI 3.1415926536	// PI value
-#define ALERT_GAP 32	// width in CHARs of the alert column
+#define ALERT_GAP 33	// width in CHARs of the alert column
 
 /************************* PLANE CREATION *************************/
 
@@ -99,6 +99,7 @@ enum MsgType : _Uint16t {
 	RADAR,
 	COMMAND,
 	ALERT,
+	INFO,
 	EXIT
 };
 enum MsgSubtype : _Uint16t {

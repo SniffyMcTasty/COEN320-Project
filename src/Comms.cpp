@@ -28,6 +28,14 @@ void* commsThread(void* arg) {
 			comms.send(msg);
 			break;
 
+		case MsgType::INFO:
+			MsgReply(rcvid, EOK, 0, 0);
+			if (msg.hdr.subtype == MsgSubtype::REQ)
+				comms.send(msg);
+			else if (msg.hdr.subtype == MsgSubtype::REPLY)
+				comms.sendToCpu(msg);
+			break;
+
 		case MsgType::EXIT:
 			exit = true;
 			MsgReply(rcvid, EOK, 0, 0);
@@ -55,8 +63,20 @@ int Comms::join() {
 
 void Comms::send(Msg msg) {
 	int coid;
-	if ((coid = name_open(to_string(msg.info.id).c_str(), 0)) == -1)
-		cout << "ERROR: CREATING CLIENT TO PLANE " << msg.info.id << endl;
+	if ((coid = name_open(to_string(msg.info.id).c_str(), 0)) == -1) {
+		cout << "ERROR: CREATING CLIENT TO PLANE" << msg.info.id << endl;
+		return;
+	}
+	MsgSend(coid, &msg, sizeof(msg), 0, 0);
+	name_close(coid);
+}
+
+void Comms::sendToCpu(Msg msg) {
+	int coid;
+	if ((coid = name_open(CPU_CHANNEL, 0)) == -1) {
+			cout << "ERROR: CREATING CLIENT TO CPU" << msg.info.id << endl;
+			return;
+	}
 	MsgSend(coid, &msg, sizeof(msg), 0, 0);
 	name_close(coid);
 }
