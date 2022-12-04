@@ -1,14 +1,14 @@
-# include "LoadCreationAlgorithm.h"
+#include "LoadAlgo.h"
 
-LoadCreationAlgorithm::LoadCreationAlgorithm() {
+LoadAlgo::LoadAlgo() {
 	this->buffer = "";
 }
 
-string LoadCreationAlgorithm::getBuffer() {
+string LoadAlgo::getBuffer() {
 	return this->buffer;
 }
 
-void LoadCreationAlgorithm::createLoad(Load load) {
+void LoadAlgo::createLoad(Load load) {
 	int nbr_planes;
 
 	if(load == low){
@@ -38,8 +38,8 @@ void LoadCreationAlgorithm::createLoad(Load load) {
 				id = rand() % ID_INTERVAL + ID_MIN; // ranges from 1000 to 9999
 				ret = ids.insert(id);
 			}
-			InitialPlane plane(t, id);
-			this->buffer += plane.toString() + "\n";
+			Plane plane(t, id);
+			this->buffer += plane.format() + "\n";
 		}
 	}
 }

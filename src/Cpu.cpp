@@ -4,7 +4,7 @@ void* computerThread(void* arg) {
 
 	Cpu& cpu = *((Cpu*)arg);
 
-	cpu.fd = creat(OUTPUT_FILENAME, S_IRUSR | S_IWUSR | S_IXUSR);
+	cpu.fd = creat(HISTORY_FILENAME, S_IRUSR | S_IWUSR | S_IXUSR);
 
 	// create channel to listen on for this thread
 	cpu.attach = name_attach(NULL, CPU_CHANNEL, 0);
@@ -69,7 +69,7 @@ void* computerThread(void* arg) {
 
 				if (++saveCounter >= 6) {
 					saveCounter = 0;
-					cpu.storeAirspace(planes);
+					cpu.saveAirspace(planes);
 				}
 
 				cpu.checkViolations(planes);
@@ -105,8 +105,7 @@ void* computerThread(void* arg) {
 	name_detach(cpu.attach, 0);
 	name_close(cpu.coid);
 
-	char c = '\n';
-	write(cpu.fd, &c, sizeof(c));
+	write(cpu.fd, "\n", sizeof("\n"));
 	close(cpu.fd);
 	pthread_exit(NULL);
 }
@@ -120,7 +119,7 @@ int Cpu::join() {
 	return pthread_join(thread, NULL);
 }
 
-void Cpu::storeAirspace(const vector<PlaneInfo_t>& planes) {
+void Cpu::saveAirspace(const vector<PlaneInfo_t>& planes) {
 	char buff[128];
 	memset(buff, 0, sizeof(buff));
 	sprintf(buff, "t=%d:\n", time);

@@ -4,6 +4,8 @@ void* consoleThread(void* arg) {
 
 	Console& console = *((Console*)arg);
 
+	int fd = creat(COMMANDS_FILENAME, S_IRUSR | S_IWUSR | S_IXUSR);
+
 	cout << "Running Console Thread" << endl;
 
 	string buffer = "";
@@ -37,6 +39,9 @@ void* consoleThread(void* arg) {
 				console.parseAltCmd(buffer);
 			else if (buffer.find("changePos") != string::npos)
 				console.parsePosCmd(buffer);
+			else if (buffer.find("exit") != string::npos) {
+				console.exit = true;
+			}
 			else
 				buffer = "* INVALID CMD: " + buffer;
 
@@ -47,6 +52,7 @@ void* consoleThread(void* arg) {
 				last.push_front(buffer);
 			}
 
+			console.saveCmd(fd, buffer);
 			buffer = "";
 		}
 		else if (c == 0x7F) {
@@ -63,8 +69,7 @@ void* consoleThread(void* arg) {
 				buffer = buffer.substr(0, size - 1);
 			}
 		}
-
-		if ((c == ' ') || (c == '-') || (c == '.') || (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
+		else if ((c == ' ') || (c == '-') || (c == '.') || (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
 			buffer += c;
 
 		pthread_mutex_lock(&mtx);
@@ -81,7 +86,13 @@ void* consoleThread(void* arg) {
 		pthread_mutex_unlock(&mtx);
 	}
 	endwin();
+	write(fd, "\n", sizeof("\n"));
+	close(fd);
 	cout << "Exit Console Thread" << endl;
+	console.sendExit(CPU_CHANNEL);
+	console.sendExit(RADAR_CHANNEL);
+	console.sendExit(COMMS_CHANNEL);
+	console.sendExit(DISPLAY_CHANNEL);
 	pthread_exit(NULL);
 }
 
@@ -145,7 +156,7 @@ void Console::parseAltCmd(string& buffer) {
 		int id = stoi(s);
 		ss >> s; // get cmd arg ALT
 		int alt = stoi(s);
-		if ((id > 0 && id < 10000) && (alt >= LOWER_Z && alt <= UPPER_Z))
+		if ((id > 0 && id < 10000) && (alt >= MIN_Z && alt <= MAX_Z))
 			changeAlt(id, alt);
 		else
 			buffer = "* BAD ARG: " + buffer + ". Accepted values: 0 < id < 10000, 15000 <= alt <= 40000.";
@@ -224,5 +235,27 @@ void Console::changePos(int id, float angle) {
 	msg.info.id = id;
 	msg.floatValue = angle;
 	MsgSend(coid, &msg, sizeof(msg), 0, 0);
+	name_close(coid);
+}
+
+void Console::saveCmd(int fd, const string& buffer) {
+	write(fd, (buffer + "\n").c_str(), sizeof(buffer.c_str()));
+}
+
+void Console::sendExit(const char* channel) {
+	int coid = 0;
+
+	// open channel to thread
+    if ((coid = name_open(channel, 0)) == -1)
+    	cout << "ERROR: CREATING CLIENT TO EXIT" << endl;
+
+	// create exit message
+	Msg msg;
+	msg.hdr.type = MsgType::EXIT;
+
+	// send exit message
+	MsgSend(coid, &msg, sizeof(msg), 0, 0);
+
+	// close the channel
 	name_close(coid);
 }

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "common.h"
-#include "Constants.h"
 
 #define SPACE "                                                                      "
 
@@ -28,4 +27,7 @@ public:
 	void changeSpeed(int id, float percentChange);
 	void changeAlt(int id, int alt);
 	void changePos(int id, float angle);
+
+	void saveCmd(int fd, const string& buffer);
+	void sendExit(const char* channel);
 };

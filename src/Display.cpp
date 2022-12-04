@@ -31,7 +31,6 @@ void* displayThread(void* arg){
 		case MsgType::COMMAND:
 			MsgReply(rcvid, EOK, 0, 0);
 
-			int x, y;
 			pthread_mutex_lock(&mtx);
 			getyx(stdscr, display.r, display.c);
 

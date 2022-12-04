@@ -3,7 +3,6 @@
 
 
 #include "common.h"
-#include "Constants.h"
 
 #define SAFEZONE_V 1000
 #define SAFEZONE_H 3000
@@ -26,7 +25,7 @@ public:
 	Cpu();
 	int join();
 
-	void storeAirspace(const vector<PlaneInfo_t>& planes);
+	void saveAirspace(const vector<PlaneInfo_t>& planes);
 
 	void checkViolations(const vector<PlaneInfo_t>& planes);
 	PlaneInfo_t calculatePosition(const PlaneInfo_t& plane, int t);

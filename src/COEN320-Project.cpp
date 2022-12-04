@@ -1,39 +1,23 @@
-#include <iostream>
-#include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-#include <cstring>
-#include <cstdlib>
-#include <ctime>
-#include <vector>
-#include <utility>
-#include <sstream>
 
-// qcc -lang-c++ -Vgcc_ntox86_64 -c -Wp,-MMD,build/x86_64-debug/src/testNcurses.d,-MT,build/x86_64-debug/src/testNcurses.o -o build/x86_64-debug/src/testNcurses.o  -Wall -fmessage-length=0 -g -O0 -fno-builtin  src/testNcurses.cpp
+// TODO: Make exit command kill all planes
+// TODO: plane info command
 
-#include "Constants.h"
-#include "LoadCreationAlgorithm.h"
-#include "Plane.h"
-#include "Radar.h"
 #include "common.h"
+#include "Plane.h"
+#include "LoadAlgo.h"
 #include "Cpu.h"
-#include "Display.h"
+#include "Radar.h"
 #include "Console.h"
 #include "Comms.h"
+#include "Display.h"
 
 using namespace std;
 
 bool createInputFile();
 vector<pair<int, PlaneInfo_t>> readInputFile();
 
-void sendExit(const char* channel);
-void parseAltCmd(string& input, int& id, int& alt);
-void changeAlt(int id, int z);
-
 pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+vector<Plane*> airspace;
 
 int main()
 {
@@ -41,7 +25,8 @@ int main()
 
 	srand((int) time(0));
 
-	if( !createInputFile() ) return EXIT_FAILURE; // file directory
+	if(!createInputFile())
+		return EXIT_FAILURE;
 
 	vector<pair<int, PlaneInfo_t>> planeArrivals = readInputFile();
 
@@ -50,12 +35,7 @@ int main()
 		cout << "t = " << to_string(planeArrivals[i].first) << " -> " << planeArrivals[i].second << endl;
 	}
 
-//	vector<pair<int, PlaneInfo_t>> planeArrivals;
-//	planeArrivals.push_back({0, {111, AIRSPACE_X / 2, 0, 25000, 0, 1000, 0, 300}});
-//	planeArrivals.push_back({0, {2222, AIRSPACE_X / 2, UPPER_Y, 30000, 0, 0, 500, 300}});
-
     // airspace tracks all planes
-	vector<Plane*> airspace;
 	Cpu cpu;
 	delay(500);
 	Radar radar(&airspace); // radar thread started with reference to airspace
@@ -70,17 +50,13 @@ int main()
 
 	cpu.sendWindowToDisplay();
 
-//     keep looping while there is still planes yet to arrive,
-//     or once all planes have arrive, keep looping until no more planes detected by radar
+    // keep looping while there is still planes yet to arrive,
 	while(!planeArrivals.empty()) {
 
-		// if there is still planes left to arrive
-		if (!planeArrivals.empty()) {
-			// if the arrival time of the next plane is now
-			if (time >= planeArrivals.front().first) {
-				airspace.push_back(new Plane(planeArrivals.front().second)); // get next PlaneInfo from arrivals and create Plane thread
-				planeArrivals.erase(planeArrivals.begin());	// delete info from arrivals after Plane started
-			}
+		// if the arrival time of the next plane is now
+		if (time >= planeArrivals.front().first) {
+			airspace.push_back(new Plane(planeArrivals.front().second)); // get next PlaneInfo from arrivals and create Plane thread
+			planeArrivals.erase(planeArrivals.begin());	// delete info from arrivals after Plane started
 		}
 
 		// delay of 1s
@@ -96,10 +72,10 @@ int main()
 
 	console.join();
 
-	sendExit(CPU_CHANNEL);
-	sendExit(RADAR_CHANNEL);
-	sendExit(COMMS_CHANNEL);
-	sendExit(DISPLAY_CHANNEL);
+	console.sendExit(CPU_CHANNEL);
+	console.sendExit(RADAR_CHANNEL);
+	console.sendExit(COMMS_CHANNEL);
+	console.sendExit(DISPLAY_CHANNEL);
 
 	comms.join();
 	cpu.join();
@@ -110,29 +86,11 @@ int main()
 	return EXIT_SUCCESS;
 }
 
-void sendExit(const char* channel) {
-	int coid = 0;
-
-	// open channel to thread
-    if ((coid = name_open(channel, 0)) == -1)
-    	cout << "ERROR: CREATING CLIENT TO RADAR" << endl;
-
-	// create exit message
-	Msg msg;
-	msg.hdr.type = MsgType::EXIT;
-
-	// send exit message
-	MsgSend(coid, &msg, sizeof(msg), 0, 0);
-
-	// close the channel
-	name_close(coid);
-}
-
 bool createInputFile()
 {
 	int fd;				  // file directory
 	long unsigned int sw; // size written
-	LoadCreationAlgorithm algo;
+	LoadAlgo algo;
 
 	// open file with read, write, execute permissions and replace if existing
 	fd = creat(INPUT_FILENAME, S_IRUSR | S_IWUSR | S_IXUSR);
@@ -244,32 +202,3 @@ vector<pair<int, PlaneInfo_t>> readInputFile()
 
 	return planes;
 }
-
-
-void parseAltCmd(string& input, int& id, int& alt) {
-	stringstream ss(input);
-	string s;
-
-	getline(ss, s, ' '); // skip cmd string
-
-	getline(ss, s, ' '); // get id arg
-	id = stoi(s);
-
-	getline(ss, s, ' '); // get alt arg
-	alt = stoi(s);
-}
-
-void changeAlt(int id, int z) {
-	int coid;
-	if ((coid = name_open(to_string(id).c_str(), 0)) == -1) {
-		cout << "ERROR: CREATING CHANNEL TO PLANE-" << id << endl;
-		return;
-	}
-	Msg msg;
-	msg.hdr.type = MsgType::COMMAND;
-	msg.hdr.subtype = MsgSubtype::CHANGE_ALTITUDE;
-	msg.info.z = z;
-	MsgSend(coid, (void *)&msg, sizeof(msg), 0, 0);
-	name_close(coid);
-}
-

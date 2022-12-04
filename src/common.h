@@ -11,72 +11,119 @@
 #include <ncurses.h>
 #include <algorithm>
 #include <fcntl.h>
+#include <cmath>
 using namespace std;
 
-extern pthread_mutex_t mtx;
+#define PI 3.1415926536	// PI value
+#define ALERT_GAP 32	// width in CHARs of the alert column
 
-struct PlaneInfo_t
-{
+/************************* PLANE CREATION *************************/
+
+#define AIRSPACE_WIDTH	100000	// x and y dimensions of airspace
+#define AIRSPACE_HEIGHT	25000	// z dimension of airspace
+
+#define MIN_Z 15000						// airspace altitude lower bound
+#define MAX_Z (MIN_Z + AIRSPACE_HEIGHT)	// airspace altitude upper bound
+
+#define MIN_SPEED 		733 	// typical min speed for aircrafts is 500 mph (~733 ft/s)
+#define MAX_SPEED 		1026	// typical max speed for aircrafts is 700 mph (~1026 ft/s)
+#define SPEED_INTERVAL	293		// difference between min and max speed
+
+#define ID_MIN		1000	// unique ID start
+#define ID_INTERVAL	9000	// unique ID end
+
+/************************* FILE NAMES ******************************/
+
+#define INPUT_FILENAME		"/data/home/qnxuser/loadInput.txt"
+#define HISTORY_FILENAME	"/data/home/qnxuser/history.txt"
+#define COMMANDS_FILENAME	"/data/home/qnxuser/commands.txt"
+
+/************************* IPC CHANNEL NAMES *************************/
+
+#define RADAR_CHANNEL	"radarChannel"
+#define CPU_CHANNEL		"cpuChannel"
+#define DISPLAY_CHANNEL	"displayChannel"
+#define COMMS_CHANNEL	"commsChannel"
+
+/****************************** TYPES ******************************/
+
+// contains all the Plane's info
+struct PlaneInfo_t {
+	// ID, position (x, y, z), speed (dx, dy, dz), flight level
     int id, x, y, z, dx, dy, dz, fl;
-    friend ostream &operator<<(ostream &out, const PlaneInfo_t &info);
+
+    // convert to string
     string toString() const {
-    	stringstream ss;
+    	stringstream ss;	// use string stream to make things easier
     	ss << "{";
         ss << "  ID=" << setw(4) << id;
-        ss << "  X=" << setw(6) << to_string(x);
-        ss << "  Y=" << setw(6) << to_string(y);
-        ss << "  Z=" << setw(5) << to_string(z);
-        ss << "  dX=" << setw(5) << to_string(dx);
-        ss << "  dY=" << setw(5) << to_string(dy);
-        ss << "  dZ=" << setw(3) << to_string(dz);
-        ss << "  FL=" << setw(3) << to_string(fl);
+        ss << "  X=" << setw(6) << x;
+        ss << "  Y=" << setw(6) << y;
+        ss << "  Z=" << setw(5) << z;
+        ss << "  dX=" << setw(5) << dx;
+        ss << "  dY=" << setw(5) << dy;
+        ss << "  dZ=" << setw(3) << dz;
+        ss << "  FL=" << setw(3) << fl;
         ss << "  }";
         return ss.str();
     }
+
+    // overloaded stream insertion operator (see below)
+    friend ostream &operator<<(ostream &out, const PlaneInfo_t &info);
 };
 
-// 4 6 6 5 4 4 4 3
-
+// stream insertion operator for PlaneInfo_t
 inline ostream &operator<<(ostream &out, const PlaneInfo_t &info) {
     out << info.toString();
     return out;
 }
 
-////////////////////////////////////////////////// IPC
-
-typedef struct _pulse msg_header_t;
-
+// message type for IPC message passing between tasks
 struct Msg {
-    msg_header_t hdr;
-    PlaneInfo_t info;
+
+	_pulse hdr;			// QNX pulse with type, subtype, code, etc.
+
+	PlaneInfo_t info;	// custom plane info
+
+    // union of float and int, only 1 can be used at a time
     union {
-    	float floatValue;
-    	int intValue;
+    	float floatValue;	// for passing floating point data
+    	int intValue;		// for pass integer data
     };
 };
 
-enum MsgType : _Uint16t { TIMEOUT, RADAR, COMMAND, ALERT, EXIT }; // add msgs here
-enum MsgSubtype : _Uint16t { CHANGE_SPEED, CHANGE_ALTITUDE, CHANGE_POSITION, CHANGE_WINDOW, REQ, REPLY }; // add subtypes here
+/****************************** ENUMS ******************************/
 
-////////////////////////////////////////////////// MACROS
+// messages types and subtypes for IPC message passing
+enum MsgType : _Uint16t {
+	// add msgs here
+	TIMEOUT,
+	RADAR,
+	COMMAND,
+	ALERT,
+	EXIT
+};
+enum MsgSubtype : _Uint16t {
+	// add subtypes here
+	CHANGE_SPEED,
+	CHANGE_ALTITUDE,
+	CHANGE_POSITION,
+	CHANGE_WINDOW,
+	REQ,
+	REPLY
+};
 
-#define AIRSPACE_X 100000
-#define AIRSPACE_Y 100000
-#define AIRSPACE_Z 25000
+// load creation enum
+enum Load {low, medium, high};
 
-#define LOWER_X 0
-#define LOWER_Y 0
-#define LOWER_Z 15000
+/****************************** UTILITY ******************************/
 
-#define UPPER_X (LOWER_X + AIRSPACE_X)
-#define UPPER_Y (LOWER_Y + AIRSPACE_Y)
-#define UPPER_Z (LOWER_Z + AIRSPACE_Z)
-
-#define ALERT_GAP 32
-
-////////////////////////////////////////////////// UTILITY
-
-inline int randRange(int lo, int hi)
-{
+// return random value in range lo...hi
+inline int randRange(int lo, int hi) {
     return rand() % (hi - lo) + lo;
 }
+
+/************************* SHARED VARIABLES *************************/
+
+// mutex for print/read screen Resource used by Display/Console tasks
+extern pthread_mutex_t mtx;

@@ -1,7 +1,4 @@
-	#include "Plane.h"
-#include <math.h>
-
-#define PI 3.14159265
+#include "Plane.h"
 
 void *planeThread(void *arg) {
 
@@ -70,46 +67,102 @@ void *planeThread(void *arg) {
 	pthread_exit(NULL);
 }
 
-ostream &operator<<(ostream &out, const Plane &plane)
-{
+ostream &operator<<(ostream &out, const Plane &plane) {
 	return out << plane.toString();
 }
 
-Plane::Plane(PlaneInfo_t info) : info{info}
-{
-	channel = to_string(info.id);
+Plane::Plane(int time, int id) {
+	this->time = time;
+	this->info.id = id;
+	this->setParameters();
+}
+
+void Plane::setParameters() {
+	// determine from which plane of the airspace the plane will come from
+	int entering = rand() % 4;
+
+	// determine angle of trajectory (45 to 135) in radians (0 parallel to plane of entering)
+	double angle = (rand() % 90 + 45) * PI / 180;
+
+	// determine total speed
+	int speed = rand() % SPEED_INTERVAL + MIN_SPEED;
+
+	// set parameters
+	switch(entering) {
+	// entering where x == 0, y != 0 (along y axis, angle 0 towards origin)
+	case 0:
+		this->info.x = 0;
+		this->info.dx = sin(angle) * speed;
+		this->info.y = rand() % (AIRSPACE_WIDTH);
+		this->info.dy = cos(angle) * speed;
+		break;
+	// entering where x != 0, y == 0 (along x axis, angle 0 away from origin)
+	case 1:
+		this->info.x = rand() % (AIRSPACE_WIDTH);
+		this->info.dx = cos(angle) * speed;
+		this->info.y = 0;
+		this->info.dy = sin(angle) * speed;
+		break;
+	// entering at max x, y != 0 (opposite of and parallel to the y axis, angle 0 away from x axis)
+	case 2:
+		this->info.x = AIRSPACE_WIDTH;
+		this->info.dx = sin(angle) * -speed;
+		this->info.y = rand() % (AIRSPACE_WIDTH);
+		this->info.dy = cos(angle) * speed;
+		break;
+	// entering at x != 0, max y (opposite of and parallel to the x axis, angle 0 towards y axis)
+	case 3:
+		this->info.x = rand() % (AIRSPACE_WIDTH);
+		this->info.dx = cos(angle) * -speed;
+		this->info.y = AIRSPACE_WIDTH;
+		this->info.dy = sin(angle) * -speed;
+		break;
+	}
+
+	// set constant z
+	this->info.z = rand() % AIRSPACE_HEIGHT + MIN_Z;
+	this->info.dz = 0;
+
+	// set flight level
+	this->info.fl = info.z / 100;
+}
+
+
+string Plane::format() {
+	stringstream ss;
+	ss	<< time << ", " << info.id << ", "
+		<< info.x << ", " << info.y << ", " << info.z << ", "
+		<< info.dx << ", " << info.dy << ", " << info.dz;
+	return ss.str();
+}
+
+Plane::Plane(PlaneInfo_t info) : info{info} {
 	if (pthread_create(&thread, NULL, planeThread, (void *)this))
 		cout << "ERROR: MAKING PLANE THREAD" << endl;
 }
 
-int Plane::join()
-{
+int Plane::join() {
 	return pthread_join(thread, NULL);
 }
 
-void Plane::setup()
-{
+void Plane::setup() {
 	setupChannel();
 	setupTimer();
 }
 
-void Plane::setupChannel()
-{
-	if ((attach = name_attach(NULL, channel.c_str(), 0)) == NULL)
-	{
+void Plane::setupChannel() {
+	if ((attach = name_attach(NULL, to_string(info.id).c_str(), 0)) == NULL) {
 		cout << "ERROR: CREATING PLANE SERVER" << endl;
 		pthread_exit(NULL);
 	}
 
-	if ((coid = name_open(channel.c_str(), 0)) == -1)
-	{
+	if ((coid = name_open(to_string(info.id).c_str(), 0)) == -1) {
 		cout << "ERROR: CREATING PLANE CLIENT" << endl;
 		pthread_exit(NULL);
 	}
 }
 
-void Plane::setupTimer()
-{
+void Plane::setupTimer() {
 	sigevent event;
 	event.sigev_notify = SIGEV_PULSE;
 	event.sigev_coid = coid;
@@ -130,30 +183,25 @@ void Plane::setupTimer()
 	}
 }
 
-void Plane::destroy()
-{
+void Plane::destroy() {
 	destroyTimer();
 	destroyChannel();
 }
 
-void Plane::destroyTimer()
-{
+void Plane::destroyTimer() {
 	itimerspec off{0, 0, 0, 0};
 	timer_settime(timerId, 0, &off, NULL);
 	timer_delete(timerId);
 }
 
-void Plane::destroyChannel()
-{
+void Plane::destroyChannel() {
 	name_close(coid);
 	name_detach(attach, 0);
 }
 
-void Plane::updatePosition()
-{
+void Plane::updatePosition() {
 	// setting a flage to see if the altedue is changing
-	if (changeAltFlag && ((info.dz < 0 && info.z <= finalAlt) || (info.dz > 0 && info.z >= finalAlt)))
-	{
+	if (changeAltFlag && ((info.dz < 0 && info.z <= finalAlt) || (info.dz > 0 && info.z >= finalAlt))) {
 		info.dz = 0;
 		changeAltFlag = false;
 	}
@@ -164,18 +212,15 @@ void Plane::updatePosition()
 	info.fl = info.z / 100;
 }
 
-bool Plane::inZone()
-{
-	return !(info.x < LOWER_X || info.x > UPPER_X || info.y < LOWER_Y || info.y > UPPER_Y || info.z < LOWER_Z || info.z > UPPER_Z);
+bool Plane::inZone() {
+	return !(info.x < 0 || info.x > AIRSPACE_WIDTH || info.y < 0 || info.y > AIRSPACE_WIDTH || info.z < MIN_Z || info.z > MAX_Z);
 }
 
-string Plane::toString() const
-{
+string Plane::toString() const {
 	return info.toString();
 }
 
-PlaneInfo_t Plane::ping()
-{
+PlaneInfo_t Plane::ping() {
 	while (coid == 0);
 	Msg msg;
 	msg.hdr.type = MsgType::RADAR;
@@ -186,36 +231,27 @@ PlaneInfo_t Plane::ping()
 	return msg.info;
 }
 
-PlaneInfo_t Plane::randomInfo()
-{
+PlaneInfo_t Plane::randomInfo() {
 	//	- Aircraft enters airspace flying in horizontal plane (x or y plane) at
 	//	constant velocity.
 	//	- Maintains speed and altitude unless commanded to change.
 	static int nextId = 1;
 	int id, x, y, z, dx, dy, dz, fl;
-
 	id = nextId++ * 55;
-
-	if (rand() % 2)
-	{
-		x = randRange(LOWER_X + LOWER_X / 4, UPPER_X - UPPER_X / 4);
-		y = rand() % 2 ? LOWER_Y : UPPER_Y;
+	if (rand() % 2) {
+		x = randRange(AIRSPACE_WIDTH / 4, AIRSPACE_WIDTH - AIRSPACE_WIDTH / 4);
+		y = rand() % 2 ? 0 : AIRSPACE_WIDTH;
 		dx = 10 * randRange(-100, 100);
-		dy = 10 * randRange(80, 120) * (y == LOWER_Y ? 1 : -1);
+		dy = 10 * randRange(80, 120) * (y == 0 ? 1 : -1);
 	}
-	else
-	{
-		x = rand() % 2 ? LOWER_X : UPPER_X;
-		y = randRange(LOWER_Y + LOWER_Y / 4, UPPER_Y - UPPER_Y / 4);
-		dx = 10 * randRange(80, 120) * (x == LOWER_X ? 1 : -1);
+	else {
+		x = rand() % 2 ? 0 : AIRSPACE_WIDTH;
+		y = randRange(AIRSPACE_WIDTH / 4, AIRSPACE_WIDTH - AIRSPACE_WIDTH / 4);
+		dx = 10 * randRange(80, 120) * (x == 0 ? 1 : -1);
 		dy = 10 * randRange(-100, 100);
 	}
-	// z = randRange(LOWER_Z + LOWER_Z / 4, UPPER_Z - UPPER_Z / 4);
-	// dz = 0;
-	z = UPPER_Z;
+	z = randRange(MIN_Z + AIRSPACE_HEIGHT / 4, MAX_Z - AIRSPACE_HEIGHT / 4);
 	dz = 0;
-	//	z = LOWER_Z;
-	//	dz = (AIRSPACE_Z / 10);
 	fl = z / 100;
 	return PlaneInfo_t{id, x, y, z, dx, dy, dz, fl};
 }

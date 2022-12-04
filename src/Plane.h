@@ -16,6 +16,9 @@ private:
     bool changeAltFlag = false;
     int finalAlt = 0;
 
+    int time = 0;
+
+	void setParameters();
     void setup();
     void setupChannel();
     void setupTimer();
@@ -25,10 +28,11 @@ private:
     void updatePosition();
 
 public:
-    string channel;
     Plane(PlaneInfo_t info);
+    Plane(int time, int id);
     int join();
     bool inZone();
+	string format();
     string toString() const;
     PlaneInfo_t ping();
 
