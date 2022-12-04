@@ -1,8 +1,7 @@
 #pragma once
 
 #include "common.h"
-
-#define SPACE "                                                                      "
+#include "Plane.h"
 
 class Console {
 
@@ -13,9 +12,10 @@ private:
 	int coid;
 
 	bool exit = false;
+	bool& mainExit;
 
 public:
-	Console();
+	Console(bool mainExit);
 	int join();
 
 	void parseWindowCmd(string& buffer);

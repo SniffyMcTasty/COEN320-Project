@@ -9,14 +9,21 @@ string LoadAlgo::getBuffer() {
 }
 
 void LoadAlgo::createLoad(Load load) {
-	int nbr_planes;
+	int nbr_planes, interval;
 
+	// explicitly setting number of Aircrafts and IO traffic by load
 	if(load == low){
-		nbr_planes = rand() % 25 + 25; // ranges from 25 to 49
+		nbr_planes = randRange(20, 39); // ranges from 20 to 40
+		interval = 5;
 	} else if(load == medium) {
-		nbr_planes = rand() % 25 + 50; // ranges from 50 to 74
+		nbr_planes = randRange(40, 59); // ranges from 40 to 60
+		interval = 4;
 	} else if(load == high) {
-		nbr_planes = rand() % 25 + 75; // ranges from 75 to 99
+		nbr_planes = randRange(60, 79); // ranges from 60 to 79
+		interval = 3;
+	} else if (load == overload) {
+		nbr_planes = randRange(80, 100);// ranges from 80 to 100
+		interval = 2;
 	}
 
 	cout << "Creation of load with " << nbr_planes << " planes" << endl;
@@ -28,7 +35,7 @@ void LoadAlgo::createLoad(Load load) {
 	set<int> ids;
 	std::pair<std::set<int>::iterator, bool> ret;
 	for(int i = 0; i < nbr_planes; t++) {
-		if(t == 0 || rand() % 4 == 0) {
+		if(t == 0 || rand() % interval == 0) {
 			i++;
 			// create id
 			int id = rand() % ID_INTERVAL + ID_MIN; // ranges from 1000 to 9999

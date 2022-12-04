@@ -16,8 +16,8 @@ using namespace std;
 bool createInputFile();
 vector<pair<int, PlaneInfo_t>> readInputFile();
 
-pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
-vector<Plane*> airspace;
+pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER; // shared mutex for printing/reading
+vector<Plane*> airspace; // airspace tracks all planes
 
 int main()
 {
@@ -32,15 +32,15 @@ int main()
 
 	cout << planeArrivals.size() << " planes read from file" << endl;
 	for (size_t i = 0; i < planeArrivals.size(); i++) {
-		cout << "t = " << to_string(planeArrivals[i].first) << " -> " << planeArrivals[i].second << endl;
+		cout << "t = " << planeArrivals[i].first << " -> " << planeArrivals[i].second << endl;
 	}
 
-    // airspace tracks all planes
+	bool exit = false;
 	Cpu cpu;
 	delay(500);
 	Radar radar(&airspace); // radar thread started with reference to airspace
 	delay(500);
-	Console console;
+	Console console(exit);
 	delay(500);
 	Comms comms;
 	delay(500);
@@ -51,7 +51,7 @@ int main()
 	cpu.sendWindowToDisplay();
 
     // keep looping while there is still planes yet to arrive,
-	while(!planeArrivals.empty()) {
+	while(!planeArrivals.empty() && !exit) {
 
 		// if the arrival time of the next plane is now
 		if (time >= planeArrivals.front().first) {
@@ -66,6 +66,8 @@ int main()
 
 	// join every thread
 	for (Plane* p : airspace) {
+		if (p->inZone())
+			console.sendExit(p->getChannel());
 		p->join();
 		delete p;
 	}
@@ -103,20 +105,19 @@ bool createInputFile()
 	{
 		cout << "Enter desired load (low, medium, high): ";
 		cin >> input;
-		if (input.compare("low") == 0)
-		{
+		if (input.compare("low") == 0) {
 			algo.createLoad(low);
 		}
-		else if (input.compare("medium") == 0)
-		{
+		else if (input.compare("medium") == 0) {
 			algo.createLoad(medium);
 		}
-		else if (input.compare("high") == 0)
-		{
+		else if (input.compare("high") == 0) {
 			algo.createLoad(high);
 		}
-		else
-		{
+		else if (input.compare("overload") == 0) {
+			algo.createLoad(overload);
+		}
+		else {
 			cout << "Invalid input, try again." << endl;
 			continue;
 		}

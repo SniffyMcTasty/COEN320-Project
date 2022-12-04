@@ -114,7 +114,7 @@ enum MsgSubtype : _Uint16t {
 };
 
 // load creation enum
-enum Load {low, medium, high};
+enum Load {low, medium, high, overload};
 
 /****************************** UTILITY ******************************/
 

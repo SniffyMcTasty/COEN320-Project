@@ -36,5 +36,12 @@ public:
     string toString() const;
     PlaneInfo_t ping();
 
+    const char* getChannel() {
+    	return to_string(info.id).c_str();
+    }
+
     static PlaneInfo_t randomInfo();
 };
+
+// make airspace reachable by CONSOLE task when exit command sent
+extern vector<Plane*> airspace;

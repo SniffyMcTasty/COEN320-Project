@@ -140,7 +140,7 @@ void Cpu::checkViolations(const vector<PlaneInfo_t>& planes) {
 	for (size_t i = 0; i < planes.size(); i++) {
 		for (size_t j = i + 1; j < planes.size(); j++) {
 
-			for (int t = 0; t < min(n, 180); t += 1) {
+			for (int t = 0; t < n; t += 1) {
 				PlaneInfo_t thisPlane = calculatePosition(planes[i], t);
 				PlaneInfo_t nextPlane = calculatePosition(planes[j], t);
 
@@ -221,8 +221,10 @@ void Cpu::sendPlaneToDisplay(PlaneInfo_t info, int i, int time){
 	int coid = 0;
 
 	// open channel to display thread
-	if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1)
+	if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1) {
 		cout << "ERROR: CREATING CLIENT TO DISPLAY" << endl;
+		return;
+	}
 
 	// create exit message
 	Msg msg;
@@ -242,8 +244,10 @@ void Cpu::alertDisplay(int id1, int id2, int t) {
 	int coid = 0;
 
 	// open channel to display thread
-	if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1)
+	if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1) {
 		cout << "ERROR: CREATING CLIENT TO DISPLAY" << endl;
+		return;
+	}
 
 	// create exit message
 	Msg msg;
@@ -262,8 +266,10 @@ void Cpu::alertDisplay(int id1, int id2, int t) {
 void Cpu::sendWindowToDisplay() {
 	int coid = 0;
 
-	if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1)
+	if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1) {
 		cout << "ERROR: CREATING CLIENT TO DISPLAY" << endl;
+		return;
+	}
 
 	Msg msg;
 	msg.hdr.type = MsgType::COMMAND;

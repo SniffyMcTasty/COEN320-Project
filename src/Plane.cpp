@@ -5,7 +5,8 @@ void *planeThread(void *arg) {
 	Plane &plane = *((Plane *)arg);
 	plane.setup();
 
-	while (plane.inZone()) {
+	bool exit = false;
+	while (plane.inZone() && !exit) {
 		Msg msg;
 
 		int rcvid = MsgReceive(plane.attach->chid, &msg, sizeof(msg), NULL);
@@ -55,6 +56,11 @@ void *planeThread(void *arg) {
 		case MsgType::TIMEOUT:
 			MsgReply(rcvid, EOK, 0, 0);
 			plane.updatePosition();
+			break;
+
+		case MsgType::EXIT:
+			exit = true;
+			MsgReply(rcvid, EOK, 0, 0);
 			break;
 
 		default:

@@ -12,16 +12,16 @@ void* consoleThread(void* arg) {
 	deque<string> last;
 	while (!console.exit) {
 
-		delay(50);
+		delay(50); // small delay to help with console printing/reading bugs
 
-		pthread_mutex_lock(&mtx);
-		unsigned char c = getch();
-		pthread_mutex_unlock(&mtx);
+		pthread_mutex_lock(&mtx);	// lock when editing screen
+		unsigned char c = getch();	// non-blocking get char, returns ERR if nothing there
+		pthread_mutex_unlock(&mtx);	// unlock after
 
-		if (c == ERR)
+		if (c == ERR)	// restart loop on ERR
 			continue;
 
-		if (c == '\n') {
+		if (c == '\n') {	// if newline entered, we want to
             int x, y;
 
             pthread_mutex_lock(&mtx);
@@ -41,6 +41,7 @@ void* consoleThread(void* arg) {
 				console.parsePosCmd(buffer);
 			else if (buffer.find("exit") != string::npos) {
 				console.exit = true;
+				console.mainExit = true;
 			}
 			else
 				buffer = "* INVALID CMD: " + buffer;
@@ -88,15 +89,12 @@ void* consoleThread(void* arg) {
 	endwin();
 	write(fd, "\n", sizeof("\n"));
 	close(fd);
+
 	cout << "Exit Console Thread" << endl;
-	console.sendExit(CPU_CHANNEL);
-	console.sendExit(RADAR_CHANNEL);
-	console.sendExit(COMMS_CHANNEL);
-	console.sendExit(DISPLAY_CHANNEL);
 	pthread_exit(NULL);
 }
 
-Console::Console() {
+Console::Console(bool exit) : mainExit{ exit } {
 	if (pthread_create(&thread, NULL, consoleThread, (void *)this))
 		cout << "ERROR: CREATING CONSOLE THREAD" << endl;
 }
@@ -122,10 +120,10 @@ void Console::parseWindowCmd(string& buffer) {
 	ss >> s; // get cmd arg 'n' for window
 	try {
 		int n = stoi(s);
-		if (n <= 0 || n > 999) throw "";
+		if (n < 5 || n > 180) throw "";
 		changeWindow(n);
 	} catch (...) {
-		buffer = "* INVALID ARG: " + buffer + ". Accepted values: 0 < n < 1000.";
+		buffer = "* INVALID ARG: " + buffer + ". Accepted values: 5 <= n <= 180.";
 	}
 }
 
@@ -186,8 +184,10 @@ void Console::parsePosCmd(string& buffer) {
 void Console::changeWindow(int n) {
 	int coid;
 
-	if ((coid = name_open(CPU_CHANNEL, 0)) == -1)
+	if ((coid = name_open(CPU_CHANNEL, 0)) == -1) {
 		cout << "ERROR: CREATING CLIENT TO CPU" << endl;
+		return;
+	}
 
 	Msg msg;
 	msg.hdr.type = MsgType::COMMAND;
@@ -201,8 +201,10 @@ void Console::changeWindow(int n) {
 
 void Console::changeSpeed(int id, float percent) {
 	int coid;
-	if ((coid = name_open(COMMS_CHANNEL, 0)) == -1)
+	if ((coid = name_open(COMMS_CHANNEL, 0)) == -1) {
 		cout << "ERROR: CREATING CLIENT TO COMMS" << endl;
+		return;
+	}
 	Msg msg;
 	msg.hdr.type = MsgType::COMMAND;
 	msg.hdr.subtype = MsgSubtype::CHANGE_SPEED;
@@ -214,8 +216,10 @@ void Console::changeSpeed(int id, float percent) {
 
 void Console::changeAlt(int id, int alt) {
 	int coid;
-	if ((coid = name_open(COMMS_CHANNEL, 0)) == -1)
+	if ((coid = name_open(COMMS_CHANNEL, 0)) == -1) {
 		cout << "ERROR: CREATING CLIENT TO COMMS" << endl;
+		return;
+	}
 	Msg msg;
 	msg.hdr.type = MsgType::COMMAND;
 	msg.hdr.subtype = MsgSubtype::CHANGE_ALTITUDE;
@@ -227,8 +231,10 @@ void Console::changeAlt(int id, int alt) {
 
 void Console::changePos(int id, float angle) {
 	int coid;
-	if ((coid = name_open(COMMS_CHANNEL, 0)) == -1)
+	if ((coid = name_open(COMMS_CHANNEL, 0)) == -1) {
 		cout << "ERROR: CREATING CLIENT TO COMMS" << endl;
+		return;
+	}
 	Msg msg;
 	msg.hdr.type = MsgType::COMMAND;
 	msg.hdr.subtype = MsgSubtype::CHANGE_POSITION;
@@ -239,15 +245,20 @@ void Console::changePos(int id, float angle) {
 }
 
 void Console::saveCmd(int fd, const string& buffer) {
-	write(fd, (buffer + "\n").c_str(), sizeof(buffer.c_str()));
+	char buff[128];
+	memset(buff, 0, sizeof(buff));
+	sprintf(buff, "%s\n", buffer.c_str());
+	write(fd, buff, sizeof(buff));
 }
 
 void Console::sendExit(const char* channel) {
 	int coid = 0;
 
 	// open channel to thread
-    if ((coid = name_open(channel, 0)) == -1)
+    if ((coid = name_open(channel, 0)) == -1) {
     	cout << "ERROR: CREATING CLIENT TO EXIT" << endl;
+    	return;
+    }
 
 	// create exit message
 	Msg msg;
