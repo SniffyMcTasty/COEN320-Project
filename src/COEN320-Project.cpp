@@ -34,19 +34,20 @@ int main() {
 		cout << "t = " << planeArrivals[i].first << " -> " << planeArrivals[i].second << endl;
 	}
 
-	planeArrivals.push_back({3, Plane::randomInfo()});
+//	for (int t = 0; t < 200; t++)
+//		planeArrivals.push_back({t, Plane::randomInfo()});
 
 	bool exit = false;
 	Cpu cpu;
-	delay(500);
+	delay(25);
 	Radar radar(&airspace); // radar thread started with reference to airspace
-	delay(500);
+	delay(25);
 	Console console(exit);
-	delay(500);
+	delay(25);
 	Comms comms;
-	delay(500);
+	delay(25);
 	Display display;
-	delay(500);
+	delay(25);
 	int time = 0;
 
 	cpu.sendWindowToDisplay();

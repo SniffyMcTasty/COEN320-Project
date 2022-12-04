@@ -24,7 +24,7 @@ public:
 	void parsePosCmd(string& buffer);
 
 	void changeWindow(int n);
-	void changeSpeed(int id, float percentChange);
+	void changeSpeed(int id, double v);
 	void changeAlt(int id, int alt);
 	void changePos(int id, float angle);
 

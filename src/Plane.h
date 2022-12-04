@@ -16,6 +16,7 @@ private:
     bool changeAltFlag = false;
     int finalAlt = 0;
 
+    double v = 0;
     int time = 0;
 
 	void setParameters();

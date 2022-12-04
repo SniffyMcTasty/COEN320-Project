@@ -55,16 +55,14 @@ struct PlaneInfo_t {
     // convert to string
     string toString() const {
     	stringstream ss;	// use string stream to make things easier
-    	ss << "{";
-        ss << "  ID=" << setw(4) << id;
-        ss << "  X=" << setw(6) << x;
-        ss << "  Y=" << setw(6) << y;
-        ss << "  Z=" << setw(5) << z;
-        ss << "  dX=" << setw(5) << dx;
-        ss << "  dY=" << setw(5) << dy;
-        ss << "  dZ=" << setw(3) << dz;
-        ss << "  FL=" << setw(3) << fl;
-        ss << "  }";
+        ss << setw(4) << id;
+        ss << "  " << setw(6) << x;
+        ss << "  " << setw(6) << y;
+        ss << "  " << setw(5) << z;
+        ss << "  " << setw(5) << dx;
+        ss << "  " << setw(5) << dy;
+        ss << "  " << setw(3) << dz;
+        ss << "  " << setw(3) << fl;
         return ss.str();
     }
 
@@ -87,7 +85,7 @@ struct Msg {
 
     // union of float and int, only 1 can be used at a time
     union {
-    	float floatValue;	// for passing floating point data
+    	double doubleValue;	// for passing floating point data
     	int intValue;		// for pass integer data
     };
 };

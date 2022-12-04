@@ -31,9 +31,10 @@ void *planeThread(void *arg) {
 			MsgReply(rcvid, EOK, 0, 0); // send the eok because it was blocked
 			// message type command send by the the radar to make the plane change speed
 			if (msg.hdr.subtype == MsgSubtype::CHANGE_SPEED) {
-				plane.info.dx *= (1 + msg.floatValue);
-				plane.info.dy *= (1 + msg.floatValue);
-				plane.info.dz *= (1 + msg.floatValue);
+				double percent = (msg.doubleValue - plane.v) / plane.v;
+				plane.info.dx *= (1 + percent);
+				plane.info.dy *= (1 + percent);
+				plane.v = msg.doubleValue;
 			}
 			// message type command send by the the radar to make the plane change altitude
 			else if (msg.hdr.subtype == MsgSubtype::CHANGE_ALTITUDE) {
@@ -44,12 +45,11 @@ void *planeThread(void *arg) {
 			// message type command send by the the radar to make the plane position
 			else if (msg.hdr.subtype == MsgSubtype::CHANGE_POSITION) {
 				const double &dx = plane.info.dx, &dy = plane.info.dy;
-				double v = sqrt(dx * dx + dy * dy);
 				double angle = atan(dy / dx);
 				if (dx < 0) angle += PI;
-				angle += msg.floatValue * PI / 180;
-				plane.info.dx = v * cos(angle);
-				plane.info.dy = v * sin(angle);
+				angle += msg.doubleValue * PI / 180;
+				plane.info.dx = plane.v * cos(angle);
+				plane.info.dy = plane.v * sin(angle);
 			}
 			break;
 
@@ -220,6 +220,7 @@ void Plane::updatePosition() {
 	info.y += info.dy;
 	info.z += info.dz;
 	info.fl = info.z / 100;
+	v = sqrt(info.dx * info.dx + info.dy * info.dy);
 }
 
 bool Plane::inZone() {

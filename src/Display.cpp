@@ -1,5 +1,8 @@
 #include "Display.h"
 
+#define COL_START 13
+#define ROW_START 6
+
 void* displayThread(void* arg){
 
 
@@ -14,7 +17,7 @@ void* displayThread(void* arg){
 	getmaxyx(stdscr, display.rows, display.cols);
 	display.makeBorders();
 
-	int rowRadar = 4, rowAlert = 4;
+	int rowRadar = 0, colRadar = 0, rowAlert = 4, cnt = 0;
 	bool exit = false;
 	while (!exit) {
 		Msg msg;
@@ -34,7 +37,7 @@ void* displayThread(void* arg){
 			pthread_mutex_lock(&mtx);
 			getyx(stdscr, display.r, display.c);
 
-			mvprintw(display.rows - 7, display.cols - ALERT_GAP + 5, "violation window: %03d", msg.intValue);
+			mvprintw(display.rows - 7, display.cols - ALERT_GAP + 4, "Violation Window: n=%03d", msg.intValue);
 
 			move(display.r, display.c);
 			refresh();
@@ -46,13 +49,19 @@ void* displayThread(void* arg){
 			pthread_mutex_lock(&mtx);
 			getyx(stdscr, display.r, display.c);
 			if ((short)msg.hdr.subtype <= 0) {
-				mvprintw(2, 2, "[t=%d] Radar Results:", msg.intValue);
-				for (int i = 3; i < rowRadar + 1; i++) {
+				cnt = 0;
+				mvprintw(4, COL_START, TITLES);
+				mvprintw(4, COL_START + (display.cols - ALERT_GAP) / 2, TITLES);
+				for (int i = ROW_START; i < display.rows - 12; i++) {
 					move(i, 1);
-					for (int j = 0; j < display.cols - ALERT_GAP - 1; j++)
+					for (int j = 0; j < (display.cols - ALERT_GAP) / 2 - 1; j++)
+						printw(" ");
+					move(i, (display.cols - ALERT_GAP) / 2 + 1);
+					for (int j = 0; j < (display.cols - ALERT_GAP) / 2 - 1; j++)
 						printw(" ");
 				}
-				rowRadar = 4;
+				rowRadar = 0;
+				colRadar = 0;
 				for (int i = 3; i < rowAlert + 1; i++) {
 					move(i, display.cols - ALERT_GAP + 1);
 					for (int j = 0; j < ALERT_GAP - 2; j++)
@@ -61,9 +70,20 @@ void* displayThread(void* arg){
 				rowAlert = 4;
 			}
 			if ((short)msg.hdr.subtype == -1)
-				mvprintw(rowRadar++, 4, "No Planes");
-			else
-				mvprintw(rowRadar++, 4, "%s", msg.info.toString().c_str());
+				mvprintw(ROW_START + 1, COL_START, "No Planes");
+			else {
+				if (colRadar == 2)
+					mvprintw((display.rows - 12) / 2, (display.cols - ALERT_GAP)/2 - 8, "!!! OVERLOAD !!!");
+				else {
+					cnt++;
+					mvprintw(ROW_START + rowRadar++, COL_START + colRadar * (display.cols - ALERT_GAP) / 2, "%s", msg.info.toString().c_str());
+					if (rowRadar > 35) {
+						rowRadar = 0;
+						colRadar += 1;
+					}
+				}
+			}
+			mvprintw(2, 2, "[t=%d] Radar Results: %d", msg.intValue, cnt);
 			move(display.r, display.c);
 			refresh();
 			pthread_mutex_unlock(&mtx);
@@ -141,13 +161,16 @@ void Display::makeBorders() {
 	for (int i = 1; i < rows - 5; i++)
 		mvprintw(i, cols - ALERT_GAP, "|");
 
+	for (int i = 1; i < rows - 12; i++)
+		mvprintw(i, (cols - ALERT_GAP) / 2, "|");
+
 	string alert = "*** ALERTS ***";
 	mvprintw(2, cols - (ALERT_GAP + alert.size())/2, alert.c_str());
 
-	move(0, 0);			for (int i = 0; i < cols; i++)				printw("-");
-	move(rows - 1, 0);	for (int i = 0; i < cols; i++)				printw("-");
-	move(rows-5, 0);	for (int i = 0; i < cols; i++)				printw("-");
-//	move(rows-10, 0);	for (int i = 0; i < cols - ALERT_GAP; i++)	printw("-");
+	move(0, 0);			for (int i = 0; i < cols; i++) printw("-");
+	move(rows - 1, 0);	for (int i = 0; i < cols; i++) printw("-");
+	move(rows-5, 0);	for (int i = 0; i < cols; i++) printw("-");
+	move(rows-12, 0);	for (int i = 0; i < cols - ALERT_GAP + 1; i++) printw("-");
 
 	mvprintw(2, 2, "[t=0]: Nothing yet");
 

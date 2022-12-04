@@ -146,13 +146,13 @@ void Console::parseSpeedCmd(string& buffer) {
 	try {
 		int id = stoi(s);
 		ss >> s; // get cmd arg %
-		float percent = stof(s);
-		if ((id > 0 && id < 10000) && (percent >= -0.5 && percent <= 0.5))
-			changeSpeed(id, percent);
+		double v = stof(s);
+		if ((id > 0 && id < 10000) && (v >= MIN_SPEED && v <= MAX_SPEED))
+			changeSpeed(id, v);
 		else
-			buffer = "* BAD ARG: " + buffer + ". Accepted values: 0 < id < 10000, -0.5 <= \% <= 0.5.";
+			buffer = "* BAD ARG: " + buffer + ". Accepted values: 0 < id < 10000, 733 <= v <= 1026.";
 	} catch (...) {
-		buffer = "* INVALID ARG(s): " + buffer + ". Requires ID & percentage.";
+		buffer = "* INVALID ARG(s): " + buffer + ". Requires ID & velocity.";
 	}
 }
 
@@ -210,7 +210,7 @@ void Console::changeWindow(int n) {
 	name_close(coid);
 }
 
-void Console::changeSpeed(int id, float percent) {
+void Console::changeSpeed(int id, double v) {
 	int coid;
 	if ((coid = name_open(CPU_CHANNEL, 0)) == -1) {
 		cout << "ERROR: CREATING CLIENT TO COMMS" << endl;
@@ -220,7 +220,7 @@ void Console::changeSpeed(int id, float percent) {
 	msg.hdr.type = MsgType::COMMAND;
 	msg.hdr.subtype = MsgSubtype::CHANGE_SPEED;
 	msg.info.id = id;
-	msg.floatValue = percent;
+	msg.doubleValue = v;
 	MsgSend(coid, &msg, sizeof(msg), 0, 0);
 	name_close(coid);
 }
@@ -250,7 +250,7 @@ void Console::changePos(int id, float angle) {
 	msg.hdr.type = MsgType::COMMAND;
 	msg.hdr.subtype = MsgSubtype::CHANGE_POSITION;
 	msg.info.id = id;
-	msg.floatValue = angle;
+	msg.doubleValue = angle;
 	MsgSend(coid, &msg, sizeof(msg), 0, 0);
 	name_close(coid);
 }

@@ -2,6 +2,8 @@
 
 #include "common.h"
 
+#define TITLES "  ID       X       Y      Z     dX     dY   dZ   FL"
+
 class Display {
 
     friend void* displayThread(void* arg);
