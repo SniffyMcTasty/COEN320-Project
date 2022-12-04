@@ -31,7 +31,6 @@ void* computerThread(void* arg) {
 
 		case MsgType::RADAR:
 			MsgReply(rcvid, EOK, 0, 0);
-//			cpu.time += 5;
 			{
 				int cnt = msg.hdr.subtype;
 				vector<PlaneInfo_t> planes;
@@ -70,7 +69,8 @@ void* computerThread(void* arg) {
 			if (msg.hdr.subtype == MsgSubtype::CHANGE_WINDOW) {
 				cpu.n = msg.intValue;
 				cpu.sendWindowToDisplay();
-			}
+			} else
+				cpu.sendToComms(msg);
 
 			break;
 
@@ -212,5 +212,15 @@ void Cpu::sendWindowToDisplay() {
 
 	MsgSend(coid, &msg, sizeof(msg), 0, 0);
 
+	name_close(coid);
+}
+
+void Cpu::sendToComms(Msg msg) {
+	int coid;
+	if ((coid = name_open(COMMS_CHANNEL, 0)) == -1) {
+		cout << "ERROR: CREATING CLIENT TO COMMS" << endl;
+		return;
+	}
+	MsgSend(coid, &msg, sizeof(msg), 0, 0);
 	name_close(coid);
 }

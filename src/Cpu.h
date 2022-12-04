@@ -19,6 +19,8 @@ public:
 	Cpu();
 	int join();
 
+	void saveAirspace(const vector<PlaneInfo_t>& planes);
+
 	void checkViolations(const vector<PlaneInfo_t>& planes);
 	PlaneInfo_t calculatePosition(const PlaneInfo_t& plane, int t);
 	bool notSafe(const PlaneInfo_t& thisPlane, const PlaneInfo_t& nextPlane);
@@ -27,6 +29,5 @@ public:
 	void alertDisplay(int id1, int id2, int t);
 	void sendWindowToDisplay();
 
-	void saveAirspace(const vector<PlaneInfo_t>& planes);
-
+	void sendToComms(Msg msg);
 };

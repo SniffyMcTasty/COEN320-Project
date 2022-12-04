@@ -41,8 +41,7 @@ void* consoleThread(void* arg) {
 				console.parsePosCmd(buffer);
 			else if (buffer.find("exit") != string::npos) {
 				console.mainExit = true;
-				exit(EXIT_SUCCESS);
-				break;
+				console.exit = true;
 			}
 			else
 				buffer = "* INVALID CMD: " + buffer;
@@ -92,6 +91,7 @@ void* consoleThread(void* arg) {
 	close(fd);
 	clear();
 	endwin();
+	delay(1000);
 
 	pthread_exit(NULL);
 }
@@ -107,17 +107,18 @@ int Console::join() {
 	string bor = "*                                         *";
 	string end = "*  Simulation over. Hit any key to exit.  *";
 
-	pthread_mutex_lock(&mtx);
-	getmaxyx(stdscr, r, c);
-	mvprintw(r/2 - 2, (c - bar.size())/2, bar.c_str());
-	mvprintw(r/2 - 1, (c - bor.size())/2, bor.c_str());
-	mvprintw(r/2, (c - end.size())/2, end.c_str());
-	mvprintw(r/2 + 1, (c - bor.size())/2, bor.c_str());
-	mvprintw(r/2 + 2, (c - bar.size())/2, bar.c_str());
-	while(getch() == ERR);
-    pthread_mutex_unlock(&mtx);
-
-    exit = true;
+	if (!exit) {
+		exit = true;
+		pthread_mutex_lock(&mtx);
+		getmaxyx(stdscr, r, c);
+		mvprintw(r/2 - 2, (c - bar.size())/2, bar.c_str());
+		mvprintw(r/2 - 1, (c - bor.size())/2, bor.c_str());
+		mvprintw(r/2, (c - end.size())/2, end.c_str());
+		mvprintw(r/2 + 1, (c - bor.size())/2, bor.c_str());
+		mvprintw(r/2 + 2, (c - bar.size())/2, bar.c_str());
+		while(getch() == ERR);
+		pthread_mutex_unlock(&mtx);
+	}
 
     cout << "Joining Console Thread" << endl;
 	return pthread_join(thread, NULL);
@@ -211,7 +212,7 @@ void Console::changeWindow(int n) {
 
 void Console::changeSpeed(int id, float percent) {
 	int coid;
-	if ((coid = name_open(COMMS_CHANNEL, 0)) == -1) {
+	if ((coid = name_open(CPU_CHANNEL, 0)) == -1) {
 		cout << "ERROR: CREATING CLIENT TO COMMS" << endl;
 		return;
 	}
@@ -226,7 +227,7 @@ void Console::changeSpeed(int id, float percent) {
 
 void Console::changeAlt(int id, int alt) {
 	int coid;
-	if ((coid = name_open(COMMS_CHANNEL, 0)) == -1) {
+	if ((coid = name_open(CPU_CHANNEL, 0)) == -1) {
 		cout << "ERROR: CREATING CLIENT TO COMMS" << endl;
 		return;
 	}
@@ -241,7 +242,7 @@ void Console::changeAlt(int id, int alt) {
 
 void Console::changePos(int id, float angle) {
 	int coid;
-	if ((coid = name_open(COMMS_CHANNEL, 0)) == -1) {
+	if ((coid = name_open(CPU_CHANNEL, 0)) == -1) {
 		cout << "ERROR: CREATING CLIENT TO COMMS" << endl;
 		return;
 	}
