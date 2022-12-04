@@ -22,6 +22,7 @@
 #include "Cpu.h"
 #include "Display.h"
 #include "Console.h"
+#include "Comms.h"
 
 using namespace std;
 
@@ -42,16 +43,16 @@ int main()
 
 	if( !createInputFile() ) return EXIT_FAILURE; // file directory
 
-//	vector<pair<int, PlaneInfo_t>> planeArrivals = readInputFile();
-//
-//	cout << planeArrivals.size() << " planes read from file" << endl;
-//	for (size_t i = 0; i < planeArrivals.size(); i++) {
-//		cout << "t = " << to_string(planeArrivals[i].first) << " -> " << planeArrivals[i].second << endl;
-//	}
+	vector<pair<int, PlaneInfo_t>> planeArrivals = readInputFile();
 
-	vector<pair<int, PlaneInfo_t>> planeArrivals;
+	cout << planeArrivals.size() << " planes read from file" << endl;
+	for (size_t i = 0; i < planeArrivals.size(); i++) {
+		cout << "t = " << to_string(planeArrivals[i].first) << " -> " << planeArrivals[i].second << endl;
+	}
+
+//	vector<pair<int, PlaneInfo_t>> planeArrivals;
 //	planeArrivals.push_back({0, {111, AIRSPACE_X / 2, 0, 25000, 0, 1000, 0, 300}});
-	planeArrivals.push_back({0, {2222, AIRSPACE_X / 2, UPPER_Y, 30000, 0, 0, 500, 300}});
+//	planeArrivals.push_back({0, {2222, AIRSPACE_X / 2, UPPER_Y, 30000, 0, 0, 500, 300}});
 
     // airspace tracks all planes
 	vector<Plane*> airspace;
@@ -61,9 +62,13 @@ int main()
 	delay(500);
 	Console console;
 	delay(500);
+	Comms comms;
+	delay(500);
 	Display display;
 	delay(500);
 	int time = 0;
+
+	cpu.sendWindowToDisplay();
 
 //     keep looping while there is still planes yet to arrive,
 //     or once all planes have arrive, keep looping until no more planes detected by radar
@@ -83,32 +88,6 @@ int main()
 		time++;
 	}
 
-
-
-//	while (true) {
-//		string input = "";
-//		getline(cin, input);
-//
-//		if (input.find("chAlt") != string::npos) {
-//
-//			int id;
-//			int alt;
-//
-//			parseAltCmd(input, id, alt);
-//
-//			if (id < 10000 && (alt >= LOWER_Z && alt <= UPPER_Z)) {
-//				cout << "Sending command: chAlt " << id << " " << alt << endl;
-//				changeAlt(id, alt);
-//			}
-//			else
-//				cout << "ERROR: bad command inputs" << endl;
-//		}
-//
-//		if (input.find("exit") != string::npos) {
-//			break;
-//		}
-//	}
-
 	// join every thread
 	for (Plane* p : airspace) {
 		p->join();
@@ -118,14 +97,14 @@ int main()
 	console.join();
 
 	sendExit(CPU_CHANNEL);
-	cpu.join();
-
 	sendExit(RADAR_CHANNEL);
-	radar.join();
-
+	sendExit(COMMS_CHANNEL);
 	sendExit(DISPLAY_CHANNEL);
-	display.join();
 
+	comms.join();
+	cpu.join();
+	radar.join();
+	display.join();
 
 	cout << "***** APPLICATION END *****" << endl;
 	return EXIT_SUCCESS;

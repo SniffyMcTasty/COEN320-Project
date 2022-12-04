@@ -3,10 +3,10 @@
 void* displayThread(void* arg){
 
 
-    Display& display = *((Display*)arg);
-    display.setupChannel();
+	Display& display = *((Display*)arg);
+	display.setupChannel();
 
-    cout << "Running Display Thread" << endl;
+	cout << "Running Display Thread" << endl;
 
 	initscr();
 	nodelay(stdscr, true);
@@ -15,7 +15,7 @@ void* displayThread(void* arg){
 	display.makeBorders();
 
 	int rowRadar = 4, rowAlert = 4;
-    bool exit = false;
+	bool exit = false;
 	while (!exit) {
 		Msg msg;
 
@@ -28,70 +28,85 @@ void* displayThread(void* arg){
 
 		switch (msg.hdr.type) {
 
-            case MsgType::PRINT:
-                MsgReply(rcvid, EOK, 0, 0);
-                pthread_mutex_lock(&mtx);
-        		getyx(stdscr, display.r, display.c);
-            	if ((short)msg.hdr.subtype <= 0) {
-        			mvprintw(2, 2, "[t=%d] CPU Radar Results:", msg.time);
-            		for (int i = 3; i < rowRadar + 1; i++) {
-            			move(i, 1);
-            			for (int j = 0; j < display.cols - ALERT_GAP - 1; j++)
-            				printw(" ");
-            		}
-            		rowRadar = 4;
-            		for (int i = 3; i < rowAlert + 1; i++) {
-            			move(i, display.cols - ALERT_GAP + 1);
-            			for (int j = 0; j < ALERT_GAP - 2; j++)
-            				printw(" ");
-            		}
-            		rowAlert = 4;
-            	}
-            	if ((short)msg.hdr.subtype == -1)
-            		mvprintw(rowRadar++, 4, "No Planes");
-            	else
-            		mvprintw(rowRadar++, 4, "%s", msg.info.toString().c_str());
-        		move(display.r, display.c);
-        		refresh();
-                pthread_mutex_unlock(&mtx);
-                break;
+		case MsgType::COMMAND:
+			MsgReply(rcvid, EOK, 0, 0);
 
-            case MsgType::ALERT:
-                MsgReply(rcvid, EOK, 0, 0);
-                pthread_mutex_lock(&mtx);
-        		getyx(stdscr, display.r, display.c);
-                mvprintw(rowAlert++, display.cols - (ALERT_GAP + 27)/2, "@ t+%03d : ID=%04d & ID=%04d", msg.info.y, msg.info.id, msg.info.x);
+			int x, y;
+			pthread_mutex_lock(&mtx);
+			getyx(stdscr, display.r, display.c);
 
-//                cout << "\nMAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!!" << endl;
-//                cout << "            ______" << endl;
-//                cout << "            _\\ _--\\___" << endl;
-//                cout << "    =  = ==(____AA____D" << endl;
-//                cout << "                \\_____\\___________________,----------.._" << "\tSafety Violation:" << endl;
-//                cout << "                /     o o o o o o o o o o o o o o o o  |\\_" << "\tPlane ID-" << msg.info.id << endl;
-//                cout << "                `--.__        ___..----..                  )" << "\t& Plane ID-" << msg.info.x << endl;
-//                cout << "                      `-----\\___________/------------`````" << "\tin t = " << msg.info.y << "s" << endl;
-//                cout << "                      =  ===(_________D\n" << endl;
-//                cout << "MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!!\n" << endl;
-        		move(display.r, display.c);
-        		refresh();
-                pthread_mutex_unlock(&mtx);
-                break;
+			mvprintw(display.rows - 7, display.cols - ALERT_GAP + 5, "violation window: %03d", msg.intValue);
 
-            case MsgType::EXIT:
-                cout << "Exit Display Thread" << endl;
-                exit = true;
-                MsgReply(rcvid, EOK, 0, 0);
-                break;
+			move(display.r, display.c);
+			refresh();
+			pthread_mutex_unlock(&mtx);
+			break;
 
-		    default:
-                MsgReply(rcvid, EOK, 0, 0);
-                break;
-            
-        }
-    }
+		case MsgType::RADAR:
+			MsgReply(rcvid, EOK, 0, 0);
+			pthread_mutex_lock(&mtx);
+			getyx(stdscr, display.r, display.c);
+			if ((short)msg.hdr.subtype <= 0) {
+				mvprintw(2, 2, "[t=%d] CPU Radar Results:", msg.intValue);
+				for (int i = 3; i < rowRadar + 1; i++) {
+					move(i, 1);
+					for (int j = 0; j < display.cols - ALERT_GAP - 1; j++)
+						printw(" ");
+				}
+				rowRadar = 4;
+				for (int i = 3; i < rowAlert + 1; i++) {
+					move(i, display.cols - ALERT_GAP + 1);
+					for (int j = 0; j < ALERT_GAP - 2; j++)
+						printw(" ");
+				}
+				rowAlert = 4;
+			}
+			if ((short)msg.hdr.subtype == -1)
+				mvprintw(rowRadar++, 4, "No Planes");
+			else
+				mvprintw(rowRadar++, 4, "%s", msg.info.toString().c_str());
+			move(display.r, display.c);
+			refresh();
+			pthread_mutex_unlock(&mtx);
+			break;
 
-    display.destroyChannel();
-    pthread_exit(NULL);
+		case MsgType::ALERT:
+			MsgReply(rcvid, EOK, 0, 0);
+			pthread_mutex_lock(&mtx);
+			getyx(stdscr, display.r, display.c);
+			// quick hack for msg parameters below: id1 is in id, id2 is in x, and time is in y
+			mvprintw(rowAlert++, display.cols - (ALERT_GAP + 27)/2, "@ t+%03d : ID=%04d & ID=%04d", msg.info.y, msg.info.id, msg.info.x);
+
+			//                cout << "\nMAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!!" << endl;
+			//                cout << "            ______" << endl;
+			//                cout << "            _\\ _--\\___" << endl;
+			//                cout << "    =  = ==(____AA____D" << endl;
+			//                cout << "                \\_____\\___________________,----------.._" << "\tSafety Violation:" << endl;
+			//                cout << "                /     o o o o o o o o o o o o o o o o  |\\_" << "\tPlane ID-" << msg.info.id << endl;
+			//                cout << "                `--.__        ___..----..                  )" << "\t& Plane ID-" << msg.info.x << endl;
+			//                cout << "                      `-----\\___________/------------`````" << "\tin t = " << msg.info.y << "s" << endl;
+			//                cout << "                      =  ===(_________D\n" << endl;
+			//                cout << "MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!! MAYDAY!!!!!!!!!!!!!\n" << endl;
+			move(display.r, display.c);
+			refresh();
+			pthread_mutex_unlock(&mtx);
+			break;
+
+		case MsgType::EXIT:
+			cout << "Exit Display Thread" << endl;
+			exit = true;
+			MsgReply(rcvid, EOK, 0, 0);
+			break;
+
+		default:
+			MsgReply(rcvid, EOK, 0, 0);
+			break;
+
+		}
+	}
+
+	display.destroyChannel();
+	pthread_exit(NULL);
 }
 
 
@@ -130,10 +145,10 @@ void Display::makeBorders() {
 	string alert = "*** ALERTS ***";
 	mvprintw(2, cols - (ALERT_GAP + alert.size())/2, alert.c_str());
 
-	move(0, 0);			for (int i = 0; i < cols; i++)	printw("-");
-	move(rows - 1, 0);	for (int i = 0; i < cols; i++)	printw("-");
-	move(rows-5, 0);	for (int i = 0; i < cols; i++)	printw("-");
-
+	move(0, 0);			for (int i = 0; i < cols; i++)				printw("-");
+	move(rows - 1, 0);	for (int i = 0; i < cols; i++)				printw("-");
+	move(rows-5, 0);	for (int i = 0; i < cols; i++)				printw("-");
+//	move(rows-10, 0);	for (int i = 0; i < cols - ALERT_GAP; i++)	printw("-");
 
 	mvprintw(2, 2, "[t=0]: Nothing yet");
 

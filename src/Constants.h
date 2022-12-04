@@ -20,6 +20,7 @@
 #define RADAR_CHANNEL	"radarChannel"
 #define CPU_CHANNEL		"cpuChannel"
 #define DISPLAY_CHANNEL	"displayChannel"
+#define COMMS_CHANNEL	"commsChannel"
 
 enum Load {low, medium, high};
 

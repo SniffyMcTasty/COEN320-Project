@@ -3,8 +3,6 @@
 #include "common.h"
 #include "Constants.h"
 
-#define ALERT_GAP 32
-
 class Display {
 
     friend void* displayThread(void* arg);

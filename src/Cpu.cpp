@@ -62,10 +62,10 @@ void* computerThread(void* arg) {
 				sort(planes.begin(), planes.end(), [](PlaneInfo_t left, PlaneInfo_t right) {return left.fl < right.fl; });
 
 				if (planes.empty())
-					cpu.sendToDisplay(PlaneInfo_t{}, -1, cpu.time);
+					cpu.sendPlaneToDisplay(PlaneInfo_t{}, -1, cpu.time);
 
 				for (size_t i = 0; i < planes.size(); i++)
-					cpu.sendToDisplay(planes[i], i, cpu.time);
+					cpu.sendPlaneToDisplay(planes[i], i, cpu.time);
 
 				if (++saveCounter >= 6) {
 					saveCounter = 0;
@@ -73,6 +73,16 @@ void* computerThread(void* arg) {
 				}
 
 				cpu.checkViolations(planes);
+			}
+
+			break;
+
+		case MsgType::COMMAND:
+			MsgReply(rcvid, EOK, 0, 0);
+
+			if (msg.hdr.subtype == MsgSubtype::CHANGE_WINDOW) {
+				cpu.n = msg.intValue;
+				cpu.sendWindowToDisplay();
 			}
 
 			break;
@@ -208,7 +218,7 @@ vector<PlaneInfo_t> Cpu::sendRadarCommand()
 	return planes;	  // return the planes info
 }
 
-void Cpu::sendToDisplay(PlaneInfo_t info, int i, int time){
+void Cpu::sendPlaneToDisplay(PlaneInfo_t info, int i, int time){
 	int coid = 0;
 
 	// open channel to display thread
@@ -217,10 +227,10 @@ void Cpu::sendToDisplay(PlaneInfo_t info, int i, int time){
 
 	// create exit message
 	Msg msg;
-	msg.hdr.type = MsgType::PRINT;
+	msg.hdr.type = MsgType::RADAR;
 	msg.hdr.subtype = i;
 	msg.info = info;
-	msg.time = time;
+	msg.intValue = time;
 
 	// send exit message
 	MsgSend(coid, &msg, sizeof(msg), 0, 0);
@@ -250,4 +260,18 @@ void Cpu::alertDisplay(int id1, int id2, int t) {
 	name_close(coid);
 }
 
+void Cpu::sendWindowToDisplay() {
+	int coid = 0;
 
+	if ((coid = name_open(DISPLAY_CHANNEL, 0)) == -1)
+		cout << "ERROR: CREATING CLIENT TO DISPLAY" << endl;
+
+	Msg msg;
+	msg.hdr.type = MsgType::COMMAND;
+	msg.hdr.subtype = MsgSubtype::CHANGE_WINDOW;
+	msg.intValue = n;
+
+	MsgSend(coid, &msg, sizeof(msg), 0, 0);
+
+	name_close(coid);
+}

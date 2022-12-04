@@ -1,95 +1,63 @@
-#include "Plane.h"
+	#include "Plane.h"
 #include <math.h>
 
 #define PI 3.14159265
 
-void *planeThread(void *arg)
-{
+void *planeThread(void *arg) {
 
 	Plane &plane = *((Plane *)arg);
 	plane.setup();
 
-	int rows, cols;
-	getmaxyx(stdscr, rows, cols);
-
-//	mvprintw(1, cols - 20, "* NEW PLANE: %d ", plane.info.id);
-//	refresh();
-//	cout << "* NEW PLANE: " << plane << endl;
-
-	Msg msg;
-	while (plane.inZone())
-	{
-		memset(&msg, 0, sizeof(msg));
+	while (plane.inZone()) {
+		Msg msg;
 
 		int rcvid = MsgReceive(plane.attach->chid, &msg, sizeof(msg), NULL);
 
-		if (rcvid == -1)
-			break;
-		if (!rcvid && (msg.hdr.code == _PULSE_CODE_DISCONNECT))
-		{
-			ConnectDetach(msg.hdr.scoid);
-			continue;
-		}
-		if (msg.hdr.type == _IO_CONNECT)
-		{
-			MsgReply(rcvid, EOK, NULL, 0);
-			continue;
-		}
-		if (msg.hdr.type > _IO_BASE && msg.hdr.type <= _IO_MAX)
-		{
-			MsgError(rcvid, ENOSYS);
-			continue;
-		}
+		if (rcvid == -1) break;
+		if (!rcvid && (msg.hdr.code == _PULSE_CODE_DISCONNECT))	{ ConnectDetach(msg.hdr.scoid);		continue; }
+		if (msg.hdr.type == _IO_CONNECT) 						{ MsgReply(rcvid, EOK, NULL, 0);	continue; }
+		if (msg.hdr.type > _IO_BASE && msg.hdr.type <= _IO_MAX)	{ MsgError(rcvid, ENOSYS);			continue; }
 
-		switch (msg.hdr.type)
-		{
+		switch (msg.hdr.type) {
 
 		case MsgType::RADAR:
-			if (msg.hdr.subtype == MsgSubtype::REQ)
-			{
+			if (msg.hdr.subtype == MsgSubtype::REQ) {
 				// turn request msg into response msg with plane info and reply
 				msg.hdr.subtype = MsgSubtype::REPLY;
 				msg.info = plane.info;
 				MsgReply(rcvid, EOK, &msg, sizeof(msg));
-				break;
 			}
-
 			break;
 
 		case MsgType::COMMAND:
+			MsgReply(rcvid, EOK, 0, 0); // send the eok because it was blocked
 			// message type command send by the the radar to make the plane change speed
-			if (msg.hdr.subtype == MsgSubtype::CHANGE_SPEED)
-			{
-				plane.info.dx *= (1 + msg.floatValue1);
-				plane.info.dy *= (1 + msg.floatValue1);
-				plane.info.dz *= (1 + msg.floatValue1);
+			if (msg.hdr.subtype == MsgSubtype::CHANGE_SPEED) {
+				plane.info.dx *= (1 + msg.floatValue);
+				plane.info.dy *= (1 + msg.floatValue);
+				plane.info.dz *= (1 + msg.floatValue);
 			}
 			// message type command send by the the radar to make the plane change altitude
-			else if (msg.hdr.subtype == MsgSubtype::CHANGE_ALTITUDE)
-			{
+			else if (msg.hdr.subtype == MsgSubtype::CHANGE_ALTITUDE) {
 				plane.changeAltFlag = true;
 				plane.finalAlt = msg.info.z;
 				plane.info.dz = msg.info.z > plane.info.z ? +50 : -50;
 			}
 			// message type command send by the the radar to make the plane position
-			// alexe this part need to be change
-			else if (msg.hdr.subtype == MsgSubtype::CHANGE_POSITION)
-			{
+			else if (msg.hdr.subtype == MsgSubtype::CHANGE_POSITION) {
 				const double &dx = plane.info.dx, &dy = plane.info.dy;
 				double v = sqrt(dx * dx + dy * dy);
 				double angle = atan(dy / dx);
 				if (dx < 0) angle += PI;
-				angle += msg.floatValue1 * PI / 180;
+				angle += msg.floatValue * PI / 180;
 				plane.info.dx = v * cos(angle);
 				plane.info.dy = v * sin(angle);
 			}
-			MsgReply(rcvid, EOK, 0, 0); // send the eok because it was blocked
 			break;
 
 		case MsgType::TIMEOUT:
-			plane.updatePosition();
-//			std::cout << "plane is :" << plane << std::endl;
 			MsgReply(rcvid, EOK, 0, 0);
+			plane.updatePosition();
 			break;
 
 		default:
@@ -99,9 +67,6 @@ void *planeThread(void *arg)
 	}
 
 	plane.destroy();
-
-//	mvprintw(2, cols - 22, "** PLANE EXIT: %d ", plane.info.id);
-//	refresh();
 	pthread_exit(NULL);
 }
 

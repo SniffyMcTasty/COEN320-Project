@@ -53,7 +53,6 @@ void* radarThread(void* arg) {
 			MsgReply(rcvid, EOK, 0, 0);
 			break;
 		}
-
 	}
 
 	radar.destroyChannel();
@@ -99,17 +98,3 @@ PlaneInfo_t Radar::secondary(Plane* plane) {
 	return plane->ping();
 }
 
-void Radar::getPlanes() {
-//	Msg msg;
-//	msg.hdr.type = MsgType::RADAR;
-//	msg.hdr.subtype = MsgSubType::REQ;
-//	if (MsgSend(coid, &msg, sizeof(msg), 0, 0) < 0)
-//		cout << "ERROR: GETPLANES FAILED" << endl;
-}
-
-//void Radar::exit() {
-//	_exit = true;
-//	Msg msg;
-//	msg.hdr.type = MsgType::EXIT;
-//	MsgSend(coid, &msg, sizeof(msg), 0, 0);
-//}

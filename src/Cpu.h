@@ -15,8 +15,8 @@ class Cpu {
 private:
 	pthread_t thread;
 	name_attach_t *attach = NULL;
-	int coid = 0;
 	timer_t timerId;
+	int coid = 0;
 	int time = 0;
 	int fd;
 	int n = 180;
@@ -34,9 +34,10 @@ public:
 
 	vector<PlaneInfo_t> sendRadarCommand();
 
-	void sendToDisplay(PlaneInfo_t info, int i, int time);
+	void sendPlaneToDisplay(PlaneInfo_t info, int i, int time);
 	void alertDisplay(int id1, int id2, int t);
 
+	void sendWindowToDisplay();
 
 };
 

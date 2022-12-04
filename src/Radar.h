@@ -4,7 +4,7 @@
 #include "Constants.h"
 #include "Plane.h"
 
-#define RADAR_CHANNEL "radarChannel"
+
 
 class Radar {
 

@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iomanip>
 #include <vector>
+#include <deque>
 #include <pthread.h>
 #include <signal.h>
 #include <sys/dispatch.h>
@@ -48,12 +49,14 @@ typedef struct _pulse msg_header_t;
 struct Msg {
     msg_header_t hdr;
     PlaneInfo_t info;
-    float floatValue1;
-    int time;
+    union {
+    	float floatValue;
+    	int intValue;
+    };
 };
 
-enum MsgType : _Uint16t { TIMEOUT, RADAR, COMMAND, PRINT, ALERT, EXIT }; // add msgs here
-enum MsgSubtype : _Uint16t { CHANGE_SPEED, CHANGE_ALTITUDE, CHANGE_POSITION, REQ, REPLY }; // add subtypes here
+enum MsgType : _Uint16t { TIMEOUT, RADAR, COMMAND, ALERT, EXIT }; // add msgs here
+enum MsgSubtype : _Uint16t { CHANGE_SPEED, CHANGE_ALTITUDE, CHANGE_POSITION, CHANGE_WINDOW, REQ, REPLY }; // add subtypes here
 
 ////////////////////////////////////////////////// MACROS
 
@@ -68,6 +71,8 @@ enum MsgSubtype : _Uint16t { CHANGE_SPEED, CHANGE_ALTITUDE, CHANGE_POSITION, REQ
 #define UPPER_X (LOWER_X + AIRSPACE_X)
 #define UPPER_Y (LOWER_Y + AIRSPACE_Y)
 #define UPPER_Z (LOWER_Z + AIRSPACE_Z)
+
+#define ALERT_GAP 32
 
 ////////////////////////////////////////////////// UTILITY
 
