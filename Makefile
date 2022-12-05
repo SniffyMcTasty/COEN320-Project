@@ -13,7 +13,7 @@ TARGET = $(OUTPUT_DIR)/$(ARTIFACT)
 #Compiler definitions
 
 CC = qcc -Vgcc_nto$(PLATFORM)
-CXX = q++ -Vgcc_nto$(PLATFORM)_cxx
+CXX = qcc -lang-c++ -Vgcc_nto$(PLATFORM)
 LD = $(CXX)
 
 #User defined include/preprocessor flags and libraries
@@ -60,7 +60,7 @@ $(OUTPUT_DIR)/%.o: %.cpp
 
 #Linking rule
 $(TARGET):$(OBJS)
-	$(LD) -o $(TARGET) $(LDFLAGS_all) $(LDFLAGS) $(OBJS) $(LIBS_all) $(LIBS)
+	$(LD) -o $(TARGET) $(LDFLAGS_all) $(LDFLAGS) $(OBJS) $(LIBS_all) $(LIBS) -l ncurses
 
 #Rules section for default compilation and linking
 all: $(TARGET)
