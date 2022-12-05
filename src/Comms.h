@@ -6,7 +6,7 @@
 		Adnan Saab (40075504 – adnan.9821@gmail.com)
 		Mohammed Al-Taie (40097284 – altaiem888@gmail.com)
 	Description:
-		Communications Thread class header.
+		Communications System Thread class header.
  */
 #pragma once
 
@@ -22,12 +22,12 @@ private:
     name_attach_t *attach = NULL; // channel attach tyoe
 
 public:
-    Comms(); // constructor
-    int join(); // join for main()
+    Comms();	// constructor
+    int join();	// join for main()
 
     void setup();	// setup IPC channel
-    void destroy();	// destory IPC channel
+    void destroy();	// destroy IPC channel
 
-    void send(Msg msg);	// send command to plane from CPU
+    void send(Msg msg);		 // send command to plane from CPU
     void sendToCpu(Msg msg); // send command to CPU from plane
 };

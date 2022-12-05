@@ -1,13 +1,27 @@
+/*
+	LoadAlgo.cpp
+	Authors:
+		Alexandre Vallières (40157223 – alexandre.vallieres@mail.concordia.ca)
+		Samson Kaller (40136815 – samson.kaller@gmail.com)
+		Adnan Saab (40075504 – adnan.9821@gmail.com)
+		Mohammed Al-Taie (40097284 – altaiem888@gmail.com)
+	Description:
+		Class that generates and input file for low, medium, high, or
+		overload of planes in airspace.
+ */
 #include "LoadAlgo.h"
 
+// Constructor
 LoadAlgo::LoadAlgo() {
 	this->buffer = "";
 }
 
+// get the string buffer
 string LoadAlgo::getBuffer() {
 	return this->buffer;
 }
 
+// create the desired load
 void LoadAlgo::createLoad(Load load) {
 	int nbr_planes, interval;
 

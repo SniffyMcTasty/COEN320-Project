@@ -6,7 +6,7 @@
 		Adnan Saab (40075504 – adnan.9821@gmail.com)
 		Mohammed Al-Taie (40097284 – altaiem888@gmail.com)
 	Description:
-		Console Thread class.
+		Console System Thread class.
 		Handles input commands from Operator to CPU system + other systems.
  */
 #include "Console.h" // class header
@@ -16,7 +16,7 @@ void* consoleThread(void* arg) {
 
 	Console& console = *((Console*)arg); // store Console object that started thread
 
-	// open file for loggin operator commands
+	// open file for logging operator commands
 	int fd = creat(COMMANDS_FILENAME, S_IRUSR | S_IWUSR | S_IXUSR);
 
 	cout << "Running Console Thread" << endl;
@@ -375,14 +375,14 @@ void Console::dispInfo(int id) {
 void Console::saveCmd(int fd, const string& buffer) {
 	char buff[128]; // string buffer
 	memset(buff, 0, sizeof(buff)); // clear buffer
-	sprintf(buff, "%s\n", buffer.c_str()); //
-	write(fd, buff, sizeof(buff));
+	sprintf(buff, "%s\n", buffer.c_str()); // format string
+	write(fd, buff, sizeof(buff)); // print string to file
 }
 
+// sends an exit command to given channel
 void Console::sendExit(const char* channel) {
-	int coid = 0;
-
 	// open channel to thread
+	int coid = 0;
     if ((coid = name_open(channel, 0)) == -1) {
     	cout << "ERROR: CREATING CLIENT TO EXIT" << endl;
     	return;

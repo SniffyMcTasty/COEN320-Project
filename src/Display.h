@@ -1,3 +1,13 @@
+/*
+	Display.h
+	Authors:
+		Alexandre Vallières (40157223 – alexandre.vallieres@mail.concordia.ca)
+		Samson Kaller (40136815 – samson.kaller@gmail.com)
+		Adnan Saab (40075504 – adnan.9821@gmail.com)
+		Mohammed Al-Taie (40097284 – altaiem888@gmail.com)
+	Description:
+		Display System Thread class header.
+ */
 #pragma once
 
 #include "common.h"
@@ -13,21 +23,23 @@
 
 class Display {
 
+	// thread function as friend to share private attributes
     friend void* displayThread(void* arg);
 
 private:
-    pthread_t thread;
-    name_attach_t *attach = NULL;
-    int rows, cols;
+    pthread_t thread;	// thread type
+    name_attach_t *attach = NULL;	// channel attach type
+    int maxRows, maxCols;	//
     int r, c;
 
-    void setupChannel();
-    void destroyChannel();
+    void setupChannel();	// setup IPC channel
+    void destroyChannel();	// destroy IPC channel
 
 public:
-    Display();
-    int join();
+    Display();	// constructor
+    int join();	// join for main()
 
+    // visual border on screen and titles/infos
     void makeBorders();
 };
     

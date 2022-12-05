@@ -6,7 +6,7 @@
 		Adnan Saab (40075504 – adnan.9821@gmail.com)
 		Mohammed Al-Taie (40097284 – altaiem888@gmail.com)
 	Description:
-		Communications Thread class.
+		Communications System Thread class.
 		Handles commands sent from console to plane and back
  */
 #include "Comms.h" // class header
