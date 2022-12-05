@@ -16,14 +16,14 @@ Because of the `ncurses` library, the code needs to be started on the Momentics 
 
 ## Operator commands
 
-Change position: changePos [ID] [ANGLE]
+<b>Change position</b>: changePos [ID] [ANGLE]
 (actually changes horizontal direction, + -> turn left, - -> turn right, -25 < ANGLE <25)
 
-Change altitude: changeAlt [ID] [ALTITUDE]
+<b>Change altitude</b>: changeAlt [ID] [ALTITUDE]
 
-Change speed: changeSpeed [ID] [MAGNITUDE]
+<b>Change speed</b>: changeSpeed [ID] [MAGNITUDE]
 
-Get airplane info: info [ID]
+<b>Get airplane info</b>: info [ID]
 
-Change n parameter: changeWindow [N]
+<b>Change n parameter</b>: changeWindow [N]
 (interval of time for violations)
