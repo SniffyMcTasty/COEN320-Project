@@ -43,6 +43,3 @@ public:
 
     static PlaneInfo_t randomInfo();
 };
-
-// make airspace reachable by CONSOLE task when exit command sent
-extern vector<Plane*> airspace;

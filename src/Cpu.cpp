@@ -55,7 +55,7 @@ void* computerThread(void* arg) {
 
 				if (++saveCounter >= 6) {
 					saveCounter = 0;
-					cpu.saveAirspace(planes);
+					cpu.saveAirspace(planes, msg.intValue);
 				}
 
 				cpu.checkViolations(planes);
@@ -109,7 +109,7 @@ int Cpu::join() {
 	return pthread_join(thread, NULL);
 }
 
-void Cpu::saveAirspace(const vector<PlaneInfo_t>& planes) {
+void Cpu::saveAirspace(const vector<PlaneInfo_t>& planes, int time) {
 	char buff[128];
 	memset(buff, 0, sizeof(buff));
 	sprintf(buff, "t=%d:\n", time);

@@ -1,3 +1,19 @@
+/*
+	COEN320-Project.cpp
+	Authors:
+		Alexandre Vallières (40157223 – alexandre.vallieres@mail.concordia.ca)
+		Samson Kaller (40136815 – samson.kaller@gmail.com)
+		Adnan Saab (40075504 – adnan.9821@gmail.com)
+		Mohammed Al-Taie (40097284 – altaiem888@gmail.com)
+	Description:
+		Main file for the ATC simulation project.
+		Prompts user to enter plane load (low, medium, high, overload).
+		Starts all threads, then releases planes according to their times.
+		Waits to join threads and exit.
+		Contains global (extern variables mtx (I/O mutex).
+ */
+
+// libraries
 #include "common.h"
 #include "Plane.h"
 #include "LoadAlgo.h"
@@ -6,42 +22,44 @@
 #include "Console.h"
 #include "Comms.h"
 #include "Display.h"
-
 using namespace std;
 
+// function prototypes for functions used by main (see below main)
 bool createInputFile();
 vector<pair<int, PlaneInfo_t>> readInputFile();
 
-pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER; // shared mutex for printing/reading
-vector<Plane*> airspace; // airspace tracks all planes
+pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;	// shared mutex for printing/reading
 
 int main() {
 	cout << "***** APPLICATION START *****" << endl;
 
-	srand((int) time(0));
+	srand((int) time(0));	// seed random generator
 
+	// create the input file (asks user for load), exit program if it fails
 	if(!createInputFile())
 		return EXIT_FAILURE;
 
+	// read the file into vector with arrival time (int) and the plane info
 	vector<pair<int, PlaneInfo_t>> planeArrivals = readInputFile();
 
+	// print planes for user to see
 	cout << planeArrivals.size() << " planes read from file" << endl;
-	for (size_t i = 0; i < planeArrivals.size(); i++) {
+	for (size_t i = 0; i < planeArrivals.size(); i++)
 		cout << "t = " << planeArrivals[i].first << " -> " << planeArrivals[i].second << endl;
-	}
 
-	bool exit = false;
+	vector<Plane*> airspace; // airspace tracks all planes
+
+	// start all system threads except planes
 	Cpu cpu;
-	Radar radar(&airspace); // radar thread started with reference to airspace
-	Console console(exit);
-	Comms comms;
-	Display display;
-	int time = 0;
+	Radar radar(&airspace); // radar thread started with reference to airspace so it can radar planes
+	Console console;		// Operator console for entering commands
+	Comms comms;			// Communications between planes and system (except radar)
+	Display display;		// Display info on planes in airspace, constraint violations, and commands
 
-	cpu.sendWindowToDisplay();
+	cpu.sendWindowToDisplay();	// send the initial constraints violation window to the Display thread
 
-    // keep looping while there is still planes yet to arrive,
-	while(!planeArrivals.empty() && !exit) {
+	int time = 0; // keep track of local time for plane releases
+	while(!planeArrivals.empty()) {	// keep looping every second while there is still planes yet to arrive,
 
 		// if the arrival time of the next plane is now
 		if (time >= planeArrivals.front().first) {
@@ -50,22 +68,22 @@ int main() {
 		}
 
 		delay(1000); // delay of 1s
-		time++;
+		time++;	// advance time
 	}
 
 	// join every thread
 	for (Plane* p : airspace) {
-		if (exit && p->inZone())
-			console.sendExit(p->getChannel());
 		p->join();
 		delete p;
 	}
 
+	// send exit msgs so each thread stops MsgReceive() and quit while loops
 	console.sendExit(RADAR_CHANNEL);
 	console.sendExit(CPU_CHANNEL);
 	console.sendExit(COMMS_CHANNEL);
 	console.sendExit(DISPLAY_CHANNEL);
 
+	// join all Threads
 	console.join();
 	cpu.join();
 	comms.join();
@@ -76,6 +94,7 @@ int main() {
 	return EXIT_SUCCESS;
 }
 
+// ask user for desired load (low, medium, high, overload) and create a random input
 bool createInputFile()
 {
 	int fd;				  // file directory
@@ -89,8 +108,8 @@ bool createInputFile()
 	string input;
 	bool stop = false;
 
-	while (!stop)
-	{
+	// loop until user enters correct option and generate
+	while (!stop) {
 		cout << "Enter desired load (low, medium, high, overload): ";
 		cin >> input;
 		if (input.compare("low") == 0) {
@@ -129,6 +148,7 @@ bool createInputFile()
 	return true;
 }
 
+// reads the Plane load input file into vector of arrival times and plane info
 vector<pair<int, PlaneInfo_t>> readInputFile()
 {
 	int sr;							   // size read
@@ -154,6 +174,8 @@ vector<pair<int, PlaneInfo_t>> readInputFile()
 	stringstream ss(content);
 	string line;
 	getline(ss, line); // ignore first line
+
+	// parse and convert aguments to plane type
 	while (getline(ss, line))
 	{
 		stringstream line_ss(line);

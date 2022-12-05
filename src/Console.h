@@ -12,10 +12,9 @@ private:
 	int coid;
 
 	bool exit = false;
-	bool& mainExit;
 
 public:
-	Console(bool& mainExit);
+	Console();
 	int join();
 
 	void parseWindowCmd(string& buffer);

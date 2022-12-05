@@ -1,11 +1,5 @@
 #include "Display.h"
 
-#define TITLE_ROW 4
-#define COL_START 13
-#define ALERT_ROW_START 6
-#define RADAR_ROW_START 6
-#define RADAR_ROWS_TOTAL 34
-
 void* displayThread(void* arg) {
 
 	Display& display = *((Display*)arg);

@@ -1,3 +1,13 @@
+/*
+	common.h
+	Authors:
+		Alexandre Vallières (40157223 – alexandre.vallieres@mail.concordia.ca)
+		Samson Kaller (40136815 – samson.kaller@gmail.com)
+		Adnan Saab (40075504 – adnan.9821@gmail.com)
+		Mohammed Al-Taie (40097284 – altaiem888@gmail.com)
+	Description:
+		Contains common libraries, macros, and functions shared by classes.
+ */
 #pragma once
 
 #include <iostream>

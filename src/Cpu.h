@@ -19,7 +19,7 @@ public:
 	Cpu();
 	int join();
 
-	void saveAirspace(const vector<PlaneInfo_t>& planes);
+	void saveAirspace(const vector<PlaneInfo_t>& planes, int time);
 
 	void checkViolations(const vector<PlaneInfo_t>& planes);
 	PlaneInfo_t calculatePosition(const PlaneInfo_t& plane, int t);
